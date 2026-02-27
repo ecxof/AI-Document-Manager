@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="mainBorderPane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.insightbaseai.controller.MainController">
+   <top>
+      <MenuBar fx:id="menuBar">
+         <menus>
+            <Menu mnemonicParsing="false" text="File">
+               <items>
+                  <SeparatorMenuItem />
+                  <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" text="Exit" accelerator="Ctrl+Q" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="View">
+               <items>
+                  <MenuItem mnemonicParsing="false" text="Chat" onAction="#handleNavigateToChat" accelerator="Ctrl+1" />
+                  <MenuItem mnemonicParsing="false" text="Admin Panel" onAction="#handleNavigateToAdmin" accelerator="Ctrl+2" />
+                  <MenuItem mnemonicParsing="false" text="Search" onAction="#handleNavigateToSearch" accelerator="Ctrl+3" />
+                  <MenuItem mnemonicParsing="false" text="Settings" onAction="#handleNavigateToSettings" accelerator="Ctrl+4" />
+                  <SeparatorMenuItem />
+                  <MenuItem mnemonicParsing="false" text="Refresh All Views" onAction="#handleRefreshViews" accelerator="F5" />
+               </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Help">
+               <items>
+                  <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" text="Help" accelerator="F1" />
+                  <SeparatorMenuItem />
+                  <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About InsightBase AI" />
+               </items>
+            </Menu>
+         </menus>
+      </MenuBar>
+   </top>
+   
+   <center>
+      <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" style="-fx-background-color: white;">
+         <tabs>
+            <Tab fx:id="chatTab" id="chatTab" text="💬 Chat">
+               <tooltip>
+                  <Tooltip text="AI-powered chat interface for asking questions about your documents" />
+               </tooltip>
+            </Tab>
+            
+            <Tab fx:id="adminTab" id="adminTab" text="📋 Admin">
+               <tooltip>
+                  <Tooltip text="Upload and manage documents, view knowledge base statistics" />
+               </tooltip>
+            </Tab>
+            
+            <Tab fx:id="searchTab" id="searchTab" text="🔍 Search">
+               <tooltip>
+                  <Tooltip text="Search across all documents with advanced filtering options" />
+               </tooltip>
+            </Tab>
+            
+            <Tab fx:id="settingsTab" id="settingsTab" text="⚙️ Settings">
+               <tooltip>
+                  <Tooltip text="Configure API settings, application preferences, and view system information" />
+               </tooltip>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </center>
+</BorderPane>

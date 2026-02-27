@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="10" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+    fx:controller="com.example.insightbaseai.controller.ChatController"
+    styleClass="content-container">
+
+    <!-- Chat Messages Area -->
+    <ScrollPane fx:id="chatScrollPane" prefHeight="400" prefWidth="600" fitToWidth="true"
+        hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="chat-scroll-pane">
+        <VBox fx:id="chatContainer" spacing="10" styleClass="chat-container">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+            </padding>
+        </VBox>
+    </ScrollPane>
+
+    <!-- Input Area -->
+    <HBox spacing="10" alignment="CENTER" styleClass="chat-input-area">
+        <padding>
+            <Insets top="10" right="20" bottom="10" left="20" />
+        </padding>
+        <TextField fx:id="inputField" promptText="Type your message..." prefWidth="500"
+            styleClass="chat-text-field" />
+        <Button fx:id="sendButton" text="Send" styleClass="button-primary chat-send-button" />
+    </HBox>
+
+</VBox>

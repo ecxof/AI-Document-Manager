@@ -1,0 +1,699 @@
+/* InsightBase AI - Simple Stylesheet */
+/* Simplified version to avoid CSS lookup issues */
+
+/* Main Application Styling */
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #FFFFFF;
+}
+
+/* Tab Pane Styling */
+.tab-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 0;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #F8F9FA;
+    -fx-background-radius: 0;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 0 1px 0 0;
+    -fx-padding: 12px 20px;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #6C757D;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #2C3E50;
+    -fx-border-width: 0 1px 0 0;
+    -fx-border-color: #DEE2E6;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: #E9ECEF;
+}
+
+/* Button Styling */
+.button {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-font-weight: 500;
+    -fx-padding: 8px 16px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #2980B9;
+}
+
+.button:pressed {
+    -fx-background-color: #1F4E79;
+}
+
+/* Success Button */
+.button-success {
+    -fx-background-color: #27AE60;
+}
+
+.button-success:hover {
+    -fx-background-color: #229954;
+}
+
+/* Danger Button */
+.button-danger {
+    -fx-background-color: #E74C3C;
+}
+
+.button-danger:hover {
+    -fx-background-color: #C0392B;
+}
+
+/* Secondary Button */
+.button-secondary {
+    -fx-background-color: #E9ECEF;
+    -fx-text-fill: #212529;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #DEE2E6;
+}
+
+/* Input Fields */
+.text-field,
+.text-area,
+.password-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 12px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #212529;
+}
+
+.text-field:focused,
+.text-area:focused,
+.password-field:focused {
+    -fx-border-color: #3498DB;
+    -fx-border-width: 2px;
+}
+
+.text-area {
+    -fx-padding: 12px;
+    -fx-background-color: #FFFFFF;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 6px 12px;
+}
+
+.combo-box:focused {
+    -fx-border-color: #3498DB;
+    -fx-border-width: 2px;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #212529;
+    -fx-font-size: 14px;
+}
+
+.title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C3E50;
+}
+
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #212529;
+}
+
+.muted-label {
+    -fx-text-fill: #6C757D;
+    -fx-font-size: 12px;
+}
+
+.error-label {
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: 500;
+}
+
+.success-label {
+    -fx-text-fill: #27AE60;
+    -fx-font-weight: 500;
+}
+
+/* ListView and TableView */
+.list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #212529;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #E3F2FD;
+    -fx-text-fill: #3498DB;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #F8F9FA;
+}
+
+/* Progress Bar */
+.progress-bar {
+    -fx-background-color: #E9ECEF;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #3498DB;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+/* ScrollPane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #FFFFFF;
+}
+
+/* CheckBox */
+.check-box {
+    -fx-text-fill: #212529;
+    -fx-font-size: 14px;
+}
+
+.check-box .box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 2px;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #3498DB;
+    -fx-border-color: #3498DB;
+}
+
+/* Slider */
+.slider .track {
+    -fx-background-color: #E9ECEF;
+    -fx-background-radius: 2px;
+}
+
+.slider .thumb {
+    -fx-background-color: #3498DB;
+    -fx-background-radius: 10px;
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.menu-bar .menu {
+    -fx-text-fill: #212529;
+    -fx-font-weight: 500;
+}
+
+.menu-bar .menu:hover {
+    -fx-background-color: #E9ECEF;
+}
+
+/* Content Areas */
+.content-container {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 16px;
+}
+
+.section-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 16px;
+    -fx-spacing: 12px;
+}
+
+.settings-action-bar {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* Stats Panel in Admin View */
+.stats-panel {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+}
+
+.stats-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.stats-label {
+    -fx-text-fill: #6c757d;
+}
+
+/* Chat View Styles */
+.chat-scroll-pane {
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #ddd;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.chat-container {
+    -fx-background-color: #f5f5f5;
+}
+
+.chat-input-area {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ddd;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.chat-text-field {
+    -fx-border-color: #ddd;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+    -fx-padding: 10px;
+}
+
+/* Chat-specific Styles */
+.chat-message {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 12px 16px;
+    -fx-spacing: 6px;
+}
+
+.chat-message-user {
+    -fx-background-color: #E3F2FD;
+    -fx-border-color: #3498DB;
+}
+
+.chat-message-ai {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+}
+
+/* Utility Classes */
+.text-center {
+    -fx-alignment: center;
+}
+
+.bold {
+    -fx-font-weight: bold;
+}
+
+.italic {
+    -fx-font-style: italic;
+}
+
+/* ===================================================
+   DARK MODE
+   Applied when ThemeManager adds "dark-mode" class
+   to the scene root node.
+   =================================================== */
+
+/* Palette:
+   bg-primary   #1E1E2E   (deep dark)
+   bg-secondary #2A2A3E   (slightly lighter)
+   bg-tertiary  #35354F   (card surfaces)
+   border       #44446A
+   text-primary #E0E0F0
+   text-muted   #8888A8
+   accent       #7B8CEA
+*/
+
+.dark-mode .root,
+.dark-mode {
+    -fx-base: #1E1E2E;
+    -fx-background: #1E1E2E;
+    -fx-control-inner-background: #2A2A3E;
+    -fx-background-color: #1E1E2E;
+}
+
+/* --- Panels & containers -------------------------------------------------- */
+.dark-mode .tab-pane,
+.dark-mode .border-pane,
+.dark-mode .split-pane,
+.dark-mode .scroll-pane,
+.dark-mode .v-box,
+.dark-mode .h-box {
+    -fx-background-color: #1E1E2E;
+}
+
+.dark-mode .tab-pane .tab-header-area {
+    -fx-background-color: #2A2A3E;
+}
+
+.dark-mode .tab-pane .tab {
+    -fx-background-color: #2A2A3E;
+    -fx-text-fill: #8888A8;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .tab-pane .tab:selected {
+    -fx-background-color: #35354F;
+    -fx-text-fill: #E0E0F0;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .tab-pane .tab:hover {
+    -fx-background-color: #35354F;
+}
+
+/* Tab content area */
+.dark-mode .tab-pane .tab-content-area {
+    -fx-background-color: #1E1E2E;
+}
+
+/* --- Scroll pane ---------------------------------------------------------- */
+.dark-mode .scroll-pane .viewport {
+    -fx-background-color: #1E1E2E;
+}
+
+.dark-mode .scroll-pane .scroll-bar {
+    -fx-background-color: #2A2A3E;
+}
+
+.dark-mode .scroll-pane .scroll-bar .thumb {
+    -fx-background-color: #44446A;
+}
+
+.dark-mode .scroll-pane .scroll-bar .thumb:hover {
+    -fx-background-color: #7B8CEA;
+}
+
+/* --- Text ----------------------------------------------------------------- */
+.dark-mode .label {
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .title-label {
+    -fx-text-fill: #C0C8FF;
+}
+
+.dark-mode .subtitle-label {
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .muted-label {
+    -fx-text-fill: #8888A8;
+}
+
+/* --- Inputs --------------------------------------------------------------- */
+.dark-mode .text-field,
+.dark-mode .text-area,
+.dark-mode .password-field {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+    -fx-text-fill: #E0E0F0;
+    -fx-prompt-text-fill: #8888A8;
+}
+
+.dark-mode .text-field:focused,
+.dark-mode .text-area:focused,
+.dark-mode .password-field:focused {
+    -fx-border-color: #7B8CEA;
+}
+
+/* --- ComboBox ------------------------------------------------------------- */
+.dark-mode .combo-box {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .combo-box .list-cell {
+    -fx-background-color: #2A2A3E;
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .combo-box-popup .list-view {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .combo-box-popup .list-cell {
+    -fx-background-color: #2A2A3E;
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .combo-box-popup .list-cell:hover {
+    -fx-background-color: #35354F;
+}
+
+.dark-mode .combo-box-popup .list-cell:selected {
+    -fx-background-color: #44446A;
+    -fx-text-fill: #C0C8FF;
+}
+
+.dark-mode .combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+/* --- Buttons -------------------------------------------------------------- */
+.dark-mode .button {
+    -fx-background-color: #7B8CEA;
+    -fx-text-fill: #FFFFFF;
+}
+
+.dark-mode .button:hover {
+    -fx-background-color: #8F9EF5;
+}
+
+.dark-mode .button:pressed {
+    -fx-background-color: #5C6DC0;
+}
+
+.dark-mode .button-secondary {
+    -fx-background-color: #35354F;
+    -fx-text-fill: #E0E0F0;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .button-secondary:hover {
+    -fx-background-color: #44446A;
+}
+
+/* --- CheckBox / RadioButton ------------------------------------------------ */
+.dark-mode .check-box {
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .check-box .box {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .check-box:selected .box {
+    -fx-background-color: #7B8CEA;
+    -fx-border-color: #7B8CEA;
+}
+
+/* --- Slider --------------------------------------------------------------- */
+.dark-mode .slider .track {
+    -fx-background-color: #44446A;
+}
+
+.dark-mode .slider .thumb {
+    -fx-background-color: #7B8CEA;
+}
+
+/* --- Progress bar --------------------------------------------------------- */
+.dark-mode .progress-bar {
+    -fx-background-color: #35354F;
+}
+
+.dark-mode .progress-bar .bar {
+    -fx-background-color: #7B8CEA;
+}
+
+/* --- List / Table --------------------------------------------------------- */
+.dark-mode .list-view {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .list-view .list-cell:selected {
+    -fx-background-color: #44446A;
+    -fx-text-fill: #C0C8FF;
+}
+
+.dark-mode .list-view .list-cell:hover {
+    -fx-background-color: #35354F;
+}
+
+/* --- Menu bar ------------------------------------------------------------- */
+.dark-mode .menu-bar {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .menu-bar .menu {
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .menu-bar .menu:hover,
+.dark-mode .menu-bar .menu:showing {
+    -fx-background-color: #35354F;
+}
+
+.dark-mode .context-menu {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .menu-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E0E0F0;
+}
+
+.dark-mode .menu-item:focused,
+.dark-mode .menu-item:hover {
+    -fx-background-color: #35354F;
+}
+
+/* --- Chat messages -------------------------------------------------------- */
+.dark-mode .chat-message {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .chat-message-user {
+    -fx-background-color: #2E2E55;
+    -fx-border-color: #7B8CEA;
+}
+
+.dark-mode .chat-message-ai {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+/* --- Section containers (override FXML inline style: white bg) ----------- */
+/* JavaFX uses higher specificity for inline styles, so we use !important
+   equivalent by re-specifying the property on a matching descendant rule.
+   The FXML VBox sections have style="-fx-background-color: white;…" which
+   we can only reliably override by setting the same property on the parent
+   via a style class. We target both the generic VBox and named containers. */
+
+.dark-mode .section-container,
+.dark-mode .content-container {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+/* Override sections that use inline style in FXML (settings_view, etc.)
+   This targets any VBox/HBox inside the dark-mode root that has an
+   inline background-color set to white - we can't directly override
+   inline styles in CSS, so the approach is to set the parent background
+   and make children transparent/inherit. */
+.dark-mode ScrollPane>.viewport>VBox>VBox {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+/* Bottom action bar in settings */
+.dark-mode .settings-action-bar {
+    -fx-background-color: #2A2A3E;
+    -fx-border-color: #44446A;
+}
+
+/* Stats Panel in Admin View */
+.dark-mode .stats-panel {
+    -fx-background-color: #252538;
+    -fx-border-color: #44446A;
+}
+
+.dark-mode .stats-value {
+    -fx-text-fill: #ffffff;
+}
+
+.dark-mode .stats-label {
+    -fx-text-fill: #a0a0b0;
+}
+
+/* Chat View Styles */
+.dark-mode .chat-scroll-pane,
+.dark-mode .chat-scroll-pane .viewport,
+.dark-mode .chat-container {
+    -fx-background-color: #1a1a2e;
+    -fx-border-color: #3a3a5a;
+}
+
+.dark-mode .chat-input-area {
+    -fx-background-color: #252538;
+    -fx-border-color: #3a3a5a;
+}
+
+.dark-mode .chat-text-field {
+    -fx-background-color: #1a1a2e;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #44446A;
+    -fx-prompt-text-fill: #6c757d;
+}
+
+/* Separator */
+.dark-mode .separator {
+    -fx-background-color: #44446A;
+}
+
+.dark-mode .separator .line {
+    -fx-border-color: #44446A;
+    -fx-border-width: 1 0 0 0;
+}

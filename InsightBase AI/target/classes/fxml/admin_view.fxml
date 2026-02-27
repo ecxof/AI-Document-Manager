@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+   fx:controller="com.example.insightbaseai.controller.AdminController">
+   <top>
+      <VBox spacing="10.0">
+         <children>
+            <Label styleClass="title-label" text="Document Administration" />
+            <Separator />
+
+            <!-- Statistics Panel -->
+            <HBox spacing="30.0" styleClass="stat-card">
+               <children>
+                  <VBox alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Label fx:id="totalDocumentsLabel" styleClass="stat-number" text="0" />
+                        <Label styleClass="stat-label" text="Total Documents" />
+                     </children>
+                  </VBox>
+                  <Separator orientation="VERTICAL" />
+                  <VBox alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Label fx:id="indexedDocumentsLabel" styleClass="stat-number" text="0" />
+                        <Label styleClass="stat-label" text="Indexed" />
+                     </children>
+                  </VBox>
+                  <Separator orientation="VERTICAL" />
+                  <VBox alignment="CENTER" spacing="5.0">
+                     <children>
+                        <Label fx:id="totalSizeLabel" styleClass="stat-number" text="0" />
+                        <Label styleClass="stat-label" text="Total Size" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <!-- Controls -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+               <children>
+                  <Button fx:id="uploadButton" onAction="#handleUpload" text="Upload Documents"
+                     styleClass="button-success" />
+                  <Button fx:id="deleteButton" onAction="#handleDelete" text="Delete" disable="true"
+                     styleClass="button-danger" />
+                  <Button fx:id="viewButton" onAction="#handleView" text="View" disable="true" />
+                  <Button fx:id="refreshButton" onAction="#handleRefresh" text="Refresh" />
+                  <Separator orientation="VERTICAL" />
+                  <Label text="Search:" />
+                  <TextField fx:id="searchField" promptText="Search documents..." prefWidth="200.0" />
+                  <Label text="Category:" />
+                  <ComboBox fx:id="categoryFilter" prefWidth="120.0" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </HBox>
+
+            <!-- Progress Bar -->
+            <ProgressBar fx:id="progressBar" prefWidth="200.0" visible="false" />
+
+            <!-- Status Label -->
+            <Label fx:id="statusLabel" text="Ready" styleClass="muted-label" />
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="15.0" />
+         </padding>
+      </VBox>
+   </top>
+
+   <center>
+      <SplitPane dividerPositions="0.6" orientation="HORIZONTAL">
+         <items>
+            <!-- Documents Table -->
+            <VBox>
+               <children>
+                  <Label styleClass="section-header" text="Documents" />
+                  <TableView fx:id="documentsTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="nameColumn" prefWidth="200.0" text="Name" />
+                        <TableColumn fx:id="typeColumn" prefWidth="60.0" text="Type" />
+                        <TableColumn fx:id="sizeColumn" prefWidth="80.0" text="Size" />
+                        <TableColumn fx:id="statusColumn" prefWidth="80.0" text="Status" />
+                        <TableColumn fx:id="dateColumn" prefWidth="120.0" text="Upload Date" />
+                     </columns>
+                  </TableView>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="5.0" top="10.0" />
+               </padding>
+            </VBox>
+
+            <!-- Document Preview -->
+            <VBox>
+               <children>
+                  <Label styleClass="section-header" text="Document Preview" />
+                  <TextArea fx:id="selectedDocumentPreview" editable="false" wrapText="true"
+                     VBox.vgrow="ALWAYS"
+                     promptText="Select a document to preview its content..." />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="5.0" right="10.0" top="10.0" />
+               </padding>
+            </VBox>
+         </items>
+      </SplitPane>
+   </center>
+</BorderPane>

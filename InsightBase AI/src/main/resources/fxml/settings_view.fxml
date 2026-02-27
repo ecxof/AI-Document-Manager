@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+   fx:controller="com.example.insightbaseai.controller.SettingsController">
+   <top>
+      <VBox spacing="10.0">
+         <children>
+            <Label styleClass="title-label" text="Application Settings" />
+            <Separator />
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="15.0" />
+         </padding>
+      </VBox>
+   </top>
+
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+         <content>
+            <VBox spacing="20.0">
+               <children>
+                  <!-- API Configuration Section -->
+                  <VBox spacing="10.0" styleClass="section-container">
+                     <children>
+                        <Label styleClass="subtitle-label" text="🔗 API Configuration" />
+                        <Separator />
+
+                        <GridPane hgap="10.0" vgap="10.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="NEVER" minWidth="120.0" />
+                              <ColumnConstraints hgrow="ALWAYS" />
+                              <ColumnConstraints hgrow="NEVER" />
+                           </columnConstraints>
+
+                           <Label text="AI Provider:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                           <ComboBox fx:id="providerCombo" prefWidth="200.0"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                           <!-- OpenAI Section (toggle handled in controller) -->
+                           <VBox fx:id="openaiSettingsBox" spacing="10.0" GridPane.columnSpan="3"
+                              GridPane.rowIndex="1">
+                              <children>
+                                 <GridPane hgap="10.0" vgap="10.0">
+                                    <columnConstraints>
+                                       <ColumnConstraints hgrow="NEVER" minWidth="120.0" />
+                                       <ColumnConstraints hgrow="ALWAYS" />
+                                       <ColumnConstraints hgrow="NEVER" />
+                                    </columnConstraints>
+                                    <Label text="OpenAI API Key:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="0" />
+                                    <PasswordField fx:id="openaiApiKeyField" promptText="sk-..."
+                                       GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                    <Button fx:id="testConnectionButton"
+                                       onAction="#handleTestConnection" text="Test"
+                                       GridPane.columnIndex="2" GridPane.rowIndex="0" />
+
+                                    <Label text="OpenAI Model:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="1" />
+                                    <ComboBox fx:id="modelSelectionCombo" prefWidth="200.0"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                 </GridPane>
+                              </children>
+                           </VBox>
+
+                           <!-- Hugging Face Section (toggle handled in controller) -->
+                           <VBox fx:id="huggingfaceSettingsBox" spacing="10.0"
+                              GridPane.columnSpan="3" GridPane.rowIndex="2">
+                              <children>
+                                 <GridPane hgap="10.0" vgap="10.0">
+                                    <columnConstraints>
+                                       <ColumnConstraints hgrow="NEVER" minWidth="120.0" />
+                                       <ColumnConstraints hgrow="ALWAYS" />
+                                       <ColumnConstraints hgrow="NEVER" />
+                                    </columnConstraints>
+                                    <Label text="HF API Key:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="0" />
+                                    <PasswordField fx:id="hfApiKeyField" promptText="hf_..."
+                                       GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                                    <Label text="HF Model:" GridPane.columnIndex="0"
+                                       GridPane.rowIndex="1" />
+                                    <TextField fx:id="hfModelField" promptText="e.g. meta-llama/Llama-3.1-8B-Instruct"
+                                       GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                 </GridPane>
+                              </children>
+                           </VBox>
+
+                           <Label fx:id="connectionStatusLabel" GridPane.columnIndex="1"
+                              GridPane.rowIndex="3" />
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Application Settings Section -->
+                  <VBox spacing="10.0" styleClass="section-container">
+                     <children>
+                        <Label styleClass="subtitle-label" text="⚙️ Application Settings" />
+                        <Separator />
+
+                        <GridPane hgap="10.0" vgap="15.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="NEVER" minWidth="150.0" />
+                              <ColumnConstraints hgrow="ALWAYS" />
+                              <ColumnConstraints hgrow="NEVER" minWidth="80.0" />
+                           </columnConstraints>
+
+                           <Label text="Max Chat History:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="0" />
+                           <Slider fx:id="maxChatHistorySlider" GridPane.columnIndex="1"
+                              GridPane.rowIndex="0" />
+                           <Label fx:id="maxChatHistoryLabel" text="10" GridPane.columnIndex="2"
+                              GridPane.rowIndex="0" />
+
+                           <Label text="Theme:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                           <ComboBox fx:id="themeCombo" prefWidth="150.0" GridPane.columnIndex="1"
+                              GridPane.rowIndex="1" />
+
+                           <Label text="Enable Logging:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="2" />
+                           <CheckBox fx:id="enableLoggingCheck" GridPane.columnIndex="1"
+                              GridPane.rowIndex="2" />
+
+                           <Label text="Auto-save Settings:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="3" />
+                           <CheckBox fx:id="autoSaveCheck" GridPane.columnIndex="1"
+                              GridPane.rowIndex="3" />
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- Advanced RAG Settings Section -->
+                  <VBox spacing="10.0" styleClass="section-container">
+                     <children>
+                        <Label styleClass="subtitle-label" text="🧠 Advanced AI Settings" />
+                        <Separator />
+
+                        <GridPane hgap="10.0" vgap="15.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="NEVER" minWidth="150.0" />
+                              <ColumnConstraints hgrow="ALWAYS" />
+                              <ColumnConstraints hgrow="NEVER" minWidth="120.0" />
+                           </columnConstraints>
+
+                           <Label text="Chunk Size:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                           <Slider fx:id="chunkSizeSlider" GridPane.columnIndex="1"
+                              GridPane.rowIndex="0" />
+                           <Label fx:id="chunkSizeLabel" text="500 characters"
+                              GridPane.columnIndex="2" GridPane.rowIndex="0" />
+
+                           <Label text="Chunk Overlap:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="1" />
+                           <Slider fx:id="overlapSlider" GridPane.columnIndex="1"
+                              GridPane.rowIndex="1" />
+                           <Label fx:id="overlapLabel" text="100 characters"
+                              GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                           <Label text="Max Retrieval Results:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="2" />
+                           <Slider fx:id="maxRetrievalResultsSlider" GridPane.columnIndex="1"
+                              GridPane.rowIndex="2" />
+                           <Label fx:id="maxRetrievalResultsLabel" text="3 results"
+                              GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                        </GridPane>
+                     </children>
+                  </VBox>
+
+                  <!-- System Information Section -->
+                  <VBox spacing="10.0" styleClass="section-container">
+                     <children>
+                        <Label styleClass="subtitle-label" text="📊 System Information" />
+                        <Separator />
+
+                        <TextArea fx:id="systemInfoArea" editable="false" prefHeight="150.0"
+                           wrapText="true"
+                           style="-fx-font-family: monospace; -fx-font-size: 10px;" />
+                     </children>
+                  </VBox>
+
+                  <!-- Statistics Section -->
+                  <VBox fx:id="statisticsContainer" spacing="10.0" styleClass="section-container">
+                     <children>
+                        <Label styleClass="subtitle-label" text="📈 Application Statistics" />
+                        <Separator />
+                        <Label styleClass="muted-label"
+                           text="Statistics will be displayed here after using the application." />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+               </padding>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+
+   <bottom>
+      <HBox alignment="CENTER" spacing="15.0" styleClass="settings-action-bar">
+         <children>
+            <Button fx:id="saveButton" onAction="#handleSave" text="Save Settings"
+               styleClass="button-success" />
+            <Button fx:id="resetButton" onAction="#handleReset" text="Reset to Defaults" />
+            <Separator orientation="VERTICAL" />
+            <Button fx:id="exportSettingsButton" onAction="#handleExportSettings"
+               text="Export Settings" />
+            <Button fx:id="clearDataButton" onAction="#handleClearData" text="Clear All Data"
+               styleClass="button-danger" />
+         </children>
+         <padding>
+            <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
+         </padding>
+      </HBox>
+   </bottom>
+</BorderPane>
