@@ -5,21 +5,39 @@ import com.example.insightbaseai.model.DocumentEntry;
 import com.example.insightbaseai.model.KnowledgeBase;
 import com.example.insightbaseai.util.ConfigurationManager;
 import com.example.insightbaseai.util.LoggerUtil;
-import com.example.insightbaseai.util.ValidationUtil; // This import is used and should not be commented out
+import com.example.insightbaseai.util.ValidationUtil;
 
+import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.allminilml6v2q.AllMiniLmL6V2QuantizedEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
-import java.util.ArrayList; // Added as it's used for ArrayList
-import java.util.HashMap; // Added as it's used for HashMap
-import java.util.List; // Added as it's used for List
-import java.util.Map; // Added as it's used for Map
-import java.util.Random; // Added as it's used in MockAssistant
-import java.util.concurrent.ConcurrentHashMap; // Added as it's used for ConcurrentHashMap
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AIService {
 
     private static final LoggerUtil logger = LoggerUtil.getInstance();
     private static AIService instance;
+
+    // Maximum number of retrieved context chunks to inject
+    private static final int MAX_CONTEXT_CHUNKS = 5;
+    // Minimum relevance score to include a chunk (0.0 – 1.0)
+    private static final double MIN_RELEVANCE_SCORE = 0.5;
 
     public interface Assistant {
         String chat(String message);
@@ -28,7 +46,11 @@ public class AIService {
     private Assistant assistant;
     private ChatLanguageModel chatModel;
     private KnowledgeBase knowledgeBase;
-    // private ChatMemory chatMemory;
+
+    // RAG components
+    private EmbeddingModel embeddingModel;
+    private EmbeddingStore<TextSegment> embeddingStore;
+    private DocumentSplitter documentSplitter;
 
     // Statistics and monitoring
     private final Map<String, Object> statistics;
@@ -39,15 +61,13 @@ public class AIService {
         this.chatHistory = new ArrayList<>();
         this.knowledgeBase = new KnowledgeBase("Default Knowledge Base", "Default knowledge base for InsightBase AI");
 
+        initializeEmbedding();
         initializeModels();
         initializeStatistics();
 
-        logger.logAIService("Initialized", "AIService initialized successfully");
+        logger.logAIService("Initialized", "AIService initialized successfully with RAG support");
     }
 
-    /**
-     * Get singleton instance of AIService
-     */
     public static AIService getInstance() {
         if (instance == null) {
             instance = new AIService();
@@ -55,9 +75,27 @@ public class AIService {
         return instance;
     }
 
+    // =========================================================================
+    // Initialization
+    // =========================================================================
+
+    private void initializeEmbedding() {
+        try {
+            logger.info("Initializing local embedding model (All-MiniLM-L6-v2)...");
+            this.embeddingModel = new AllMiniLmL6V2QuantizedEmbeddingModel();
+            this.embeddingStore = new InMemoryEmbeddingStore<>();
+            // Split docs into ~500-char chunks with a 50-char overlap
+            this.documentSplitter = DocumentSplitters.recursive(500, 50);
+            logger.info("Embedding model initialized successfully.");
+        } catch (Exception e) {
+            logger.error("Failed to initialize embedding model — RAG will be disabled.", e);
+            this.embeddingModel = null;
+            this.embeddingStore = null;
+        }
+    }
+
     private void initializeModels() {
         try {
-            // Initialize chat model using ConfigurationManager
             ConfigurationManager config = ConfigurationManager.getInstance();
             String provider = config.getAIProvider();
 
@@ -71,7 +109,6 @@ public class AIService {
                     if (modelName == null || modelName.trim().isEmpty() || "gpt2".equalsIgnoreCase(modelName.trim())) {
                         modelName = "meta-llama/Llama-3.1-8B-Instruct";
                     }
-                    // Hugging Face inference API is OpenAI-compatible
                     this.chatModel = OpenAiChatModel.builder()
                             .baseUrl("https://router.huggingface.co/v1")
                             .apiKey(apiKey)
@@ -79,7 +116,6 @@ public class AIService {
                             .build();
                 }
             } else {
-                // Default to OpenAI
                 String apiKey = config.getOpenAIApiKey();
                 if (apiKey == null || apiKey.trim().isEmpty()) {
                     logger.warn("OpenAI API Key not found. Using mock responses.");
@@ -96,12 +132,6 @@ public class AIService {
                 }
             }
 
-            /*
-             * // Initialize chat memory
-             * this.chatMemory = MessageWindowChatMemory.withMaxMessages(10);
-             */
-
-            // Build AI assistant
             buildAssistant();
 
         } catch (Exception e) {
@@ -126,7 +156,6 @@ public class AIService {
                 }
             };
         } else {
-            // Mock assistant for when API key is not available
             this.assistant = new MockAssistant();
         }
     }
@@ -138,6 +167,10 @@ public class AIService {
         statistics.put("averageResponseTime", 0.0);
         statistics.put("lastQueryTime", 0L);
     }
+
+    // =========================================================================
+    // Chat / Response
+    // =========================================================================
 
     public String getResponse(String message) {
         if (!ValidationUtil.isValidChatMessage(message)) {
@@ -152,10 +185,13 @@ public class AIService {
             chatHistory.add(userMessage);
             logger.logUserAction("Chat Message", "User sent: " + message.substring(0, Math.min(50, message.length())));
 
+            // Build the prompt with RAG context
+            String prompt = buildRagPrompt(message);
+
             // Get AI response
             String response;
             if (assistant != null) {
-                response = assistant.chat(message);
+                response = assistant.chat(prompt);
             } else {
                 ConfigurationManager config = ConfigurationManager.getInstance();
                 String provider = config.getAIProvider();
@@ -167,7 +203,6 @@ public class AIService {
             ChatMessage aiMessage = new ChatMessage(response, ChatMessage.MessageType.AI);
             chatHistory.add(aiMessage);
 
-            // Update statistics
             updateStatistics(startTime);
 
             return response;
@@ -189,6 +224,60 @@ public class AIService {
         }
     }
 
+    /**
+     * Retrieve relevant context chunks from the embedding store and prepend them
+     * to the user message to form a grounded RAG prompt.
+     */
+    private String buildRagPrompt(String userQuestion) {
+        if (embeddingModel == null || embeddingStore == null || knowledgeBase.isEmpty()) {
+            return userQuestion;
+        }
+
+        try {
+            logger.info("Performing vector similarity search for: "
+                    + userQuestion.substring(0, Math.min(60, userQuestion.length())));
+
+            Embedding queryEmbedding = embeddingModel.embed(userQuestion).content();
+            EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                    .queryEmbedding(queryEmbedding)
+                    .maxResults(MAX_CONTEXT_CHUNKS)
+                    .minScore(MIN_RELEVANCE_SCORE)
+                    .build();
+
+            EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
+            List<EmbeddingMatch<TextSegment>> matches = searchResult.matches();
+
+            if (matches.isEmpty()) {
+                logger.info("No relevant context found in knowledge base. Answering without RAG context.");
+                return userQuestion;
+            }
+
+            StringBuilder context = new StringBuilder();
+            context.append("The following are the most relevant excerpts from the provided documents:\n\n");
+            for (int i = 0; i < matches.size(); i++) {
+                EmbeddingMatch<TextSegment> match = matches.get(i);
+                context.append("--- Excerpt ").append(i + 1)
+                        .append(" (relevance: ").append(String.format("%.2f", match.score())).append(") ---\n")
+                        .append(match.embedded().text()).append("\n\n");
+            }
+
+            logger.info("Injecting " + matches.size() + " context chunks into prompt.");
+
+            return "You are an AI assistant. Use the following context from the user's documents to answer the question accurately and concisely. "
+                    + "If the answer is not found in the context, say so clearly.\n\n"
+                    + context
+                    + "User Question: " + userQuestion;
+
+        } catch (Exception e) {
+            logger.error("RAG retrieval failed, falling back to no-context response.", e);
+            return userQuestion;
+        }
+    }
+
+    // =========================================================================
+    // Document Management
+    // =========================================================================
+
     public void addDocument(DocumentEntry document) {
         if (document == null || document.getContent() == null || document.getContent().trim().isEmpty()) {
             logger.warn("Attempted to add null or empty document");
@@ -201,21 +290,24 @@ public class AIService {
             // Add to knowledge base
             knowledgeBase.addDocument(document);
 
-            // Simple chunking - split by paragraphs
-            String content = document.getContent();
-            String[] paragraphs = content.split("\n\n");
-            int chunkCount = Math.max(1, paragraphs.length);
+            // Split into chunks and embed
+            int chunkCount = 0;
+            if (embeddingModel != null && embeddingStore != null) {
+                chunkCount = embedDocument(document);
+            } else {
+                // Fallback: paragraph-based chunk count without embedding
+                String[] paragraphs = document.getContent().split("\n\n");
+                chunkCount = Math.max(1, paragraphs.length);
+            }
 
-            // Update document with chunk count
             document.setChunkCount(chunkCount);
             document.setIndexed(true);
 
-            // Update statistics
             statistics.put("totalDocuments", (Integer) statistics.get("totalDocuments") + 1);
             statistics.put("totalChunks", (Integer) statistics.get("totalChunks") + chunkCount);
 
-            logger.logDocumentProcessing(document.getFileName(), "Added and indexed");
-            logger.logPerformance("Document Indexing", System.currentTimeMillis() - startTime);
+            logger.logDocumentProcessing(document.getFileName(), "Added and indexed (" + chunkCount + " chunks)");
+            logger.logPerformance("Document Indexing + Embedding", System.currentTimeMillis() - startTime);
 
         } catch (Exception e) {
             logger.error("Failed to add document: " + document.getFileName(), e);
@@ -223,16 +315,42 @@ public class AIService {
         }
     }
 
+    /**
+     * Split document content into chunks and store embeddings in the vector store.
+     * 
+     * @return number of chunks created
+     */
+    private int embedDocument(DocumentEntry docEntry) {
+        try {
+            Document langchainDoc = Document.from(docEntry.getContent());
+            List<TextSegment> segments = documentSplitter.split(langchainDoc);
+
+            if (segments.isEmpty()) {
+                logger.warn("No segments produced for document: " + docEntry.getFileName());
+                return 0;
+            }
+
+            logger.info("Embedding " + segments.size() + " chunks for: " + docEntry.getFileName());
+
+            List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
+            embeddingStore.addAll(embeddings, segments);
+
+            logger.info("Successfully embedded " + segments.size() + " chunks for: " + docEntry.getFileName());
+            return segments.size();
+
+        } catch (Exception e) {
+            logger.error("Failed to embed document: " + docEntry.getFileName(), e);
+            return 1; // Fallback count
+        }
+    }
+
     public void removeDocument(String documentId) {
         DocumentEntry document = knowledgeBase.getDocument(documentId);
         if (document != null) {
             knowledgeBase.removeDocument(documentId);
-
-            // Note: InMemoryEmbeddingStore doesn't support removal by metadata
-            // In a production system, you'd want a more sophisticated embedding store
+            // NOTE: InMemoryEmbeddingStore doesn't support deletion by document ID.
+            // In production, consider a persistent vector DB (e.g. Chroma, Qdrant).
             logger.logDocumentProcessing(document.getFileName(), "Removed from knowledge base");
-
-            // Update statistics
             statistics.put("totalDocuments", Math.max(0, (Integer) statistics.get("totalDocuments") - 1));
         }
     }
@@ -241,9 +359,12 @@ public class AIService {
         if (!ValidationUtil.isValidSearchQuery(query)) {
             return new ArrayList<>();
         }
-
         return knowledgeBase.searchDocuments(query);
     }
+
+    // =========================================================================
+    // Utility
+    // =========================================================================
 
     public List<ChatMessage> getChatHistory() {
         return new ArrayList<>(chatHistory);
@@ -257,7 +378,6 @@ public class AIService {
 
     public void clearChatHistory() {
         chatHistory.clear();
-        // this.chatMemory = MessageWindowChatMemory.withMaxMessages(10);
         buildAssistant();
         logger.logUserAction("Clear History", "Chat history cleared");
     }
@@ -270,6 +390,7 @@ public class AIService {
         Map<String, Object> currentStats = new HashMap<>(statistics);
         currentStats.put("knowledgeBaseStats", knowledgeBase.getDetailedStatistics());
         currentStats.put("chatHistorySize", chatHistory.size());
+        currentStats.put("ragEnabled", embeddingModel != null);
         return currentStats;
     }
 
@@ -277,8 +398,6 @@ public class AIService {
         int totalQueries = (Integer) statistics.get("totalQueries") + 1;
         long responseTime = System.currentTimeMillis() - startTime;
         double avgResponseTime = (Double) statistics.get("averageResponseTime");
-
-        // Update average response time
         avgResponseTime = (avgResponseTime * (totalQueries - 1) + responseTime) / totalQueries;
 
         statistics.put("totalQueries", totalQueries);
@@ -297,23 +416,22 @@ public class AIService {
             ConfigurationManager config = ConfigurationManager.getInstance();
             String provider = config.getAIProvider();
             String providerName = "openai".equalsIgnoreCase(provider) ? "OpenAI" : "Hugging Face";
-            return "Fully configured with " + providerName + " API";
+            return "Fully configured with " + providerName + " API" + (embeddingModel != null ? " + RAG" : "");
         } else {
             return "Running in demo mode - AI API key not configured";
         }
     }
 
-    /**
-     * Reinitialize the AI models with updated configuration
-     * Call this method after updating the API key in settings
-     */
     public void refreshConfiguration() {
         logger.logAIService("Configuration Refresh", "Refreshing AI service configuration");
         initializeModels();
         logger.logAIService("Configuration Refresh", "AI service configuration refreshed successfully");
     }
 
-    // Mock assistant for when API key is not available
+    // =========================================================================
+    // Mock Assistant
+    // =========================================================================
+
     private static class MockAssistant implements Assistant {
         private final Random random = new Random();
 
@@ -326,22 +444,18 @@ public class AIService {
 
         @Override
         public String chat(String message) {
-            // Simple pattern matching for demo
             String lowerMessage = message.toLowerCase();
 
             if (lowerMessage.contains("hello") || lowerMessage.contains("hi")) {
                 return "Hello! I'm InsightBase AI running in demo mode. Please configure your OpenAI API key for full functionality.";
             }
-
             if (lowerMessage.contains("help")) {
                 return "I can help you search through your documents and answer questions. To enable full AI capabilities, please set up your OpenAI API key in the settings.";
             }
-
             if (lowerMessage.contains("document") || lowerMessage.contains("file")) {
                 return "I can work with your uploaded documents once you configure the OpenAI API key. Currently running in demonstration mode.";
             }
 
-            // Return random mock response
             return mockResponses[random.nextInt(mockResponses.length)];
         }
     }

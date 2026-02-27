@@ -137,10 +137,14 @@ public class AdminController {
         fileChooser.setTitle("Select Documents to Upload");
 
         // Set file extension filters
-        FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt");
-        FileChooser.ExtensionFilter allFilter = new FileChooser.ExtensionFilter("All Supported Files", "*.txt");
+        FileChooser.ExtensionFilter pdfFilter = new FileChooser.ExtensionFilter("PDF Documents (*.pdf)", "*.pdf");
+        FileChooser.ExtensionFilter docxFilter = new FileChooser.ExtensionFilter("Word Documents (*.docx)", "*.docx");
+        FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text Files (*.txt, *.md)", "*.txt",
+                "*.md");
+        FileChooser.ExtensionFilter allFilter = new FileChooser.ExtensionFilter("All Supported Files",
+                "*.txt", "*.pdf", "*.docx", "*.md", "*.java", "*.xml", "*.json", "*.yml", "*.yaml", "*.properties");
 
-        fileChooser.getExtensionFilters().addAll(allFilter, txtFilter);
+        fileChooser.getExtensionFilters().addAll(allFilter, pdfFilter, docxFilter, txtFilter);
         fileChooser.setSelectedExtensionFilter(allFilter);
 
         // Show file dialog
@@ -202,6 +206,8 @@ public class AdminController {
             @Override
             protected void succeeded() {
                 javafx.application.Platform.runLater(() -> {
+                    progressBar.progressProperty().unbind();
+                    statusLabel.textProperty().unbind();
                     progressBar.setVisible(false);
                     statusLabel.setText("Upload completed successfully");
                     refreshDocuments();
@@ -211,6 +217,8 @@ public class AdminController {
             @Override
             protected void failed() {
                 javafx.application.Platform.runLater(() -> {
+                    progressBar.progressProperty().unbind();
+                    statusLabel.textProperty().unbind();
                     progressBar.setVisible(false);
                     statusLabel.setText("Upload failed");
                     showError("Upload operation failed: " + getException().getMessage());
@@ -290,6 +298,7 @@ public class AdminController {
 
     @FXML
     private void handleRefresh() {
+        statusLabel.textProperty().unbind();
         refreshDocuments();
         statusLabel.setText("Documents refreshed");
     }
