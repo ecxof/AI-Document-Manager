@@ -4,13 +4,14 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.insightbaseai.controller.SearchController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+   fx:controller="com.example.insightbaseai.controller.SearchController">
    <top>
       <VBox spacing="10.0">
          <children>
             <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Document Search" />
             <Separator />
-            
+
             <!-- Search Controls -->
             <VBox spacing="10.0">
                <children>
@@ -18,27 +19,81 @@
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
                         <Label text="Search:" />
-                        <TextField fx:id="searchField" promptText="Enter search terms..." prefWidth="300.0" 
-                                 style="-fx-font-size: 14px;" />
-                        <Button fx:id="searchButton" onAction="#handleSearch" text="Search" 
-                              style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
+                        <TextField fx:id="searchField" promptText="Enter search terms..."
+                           prefWidth="300.0"
+                           style="-fx-font-size: 14px;" />
+                        <Button fx:id="searchButton" onAction="#handleSearch" text="🔍 Search"
+                           style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
                         <Button fx:id="clearButton" onAction="#handleClear" text="Clear" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#handleExportResults" text="📥 Export CSV"
+                           style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
                      </children>
                   </HBox>
-                  
-                  <!-- Search Options -->
+
+                  <!-- Basic Search Options -->
                   <HBox alignment="CENTER_LEFT" spacing="15.0">
                      <children>
                         <Label text="Mode:" />
-                        <ComboBox fx:id="searchModeCombo" prefWidth="120.0" />
+                        <ComboBox fx:id="searchModeCombo" prefWidth="140.0" />
                         <Separator orientation="VERTICAL" />
                         <CheckBox fx:id="caseSensitiveCheck" text="Case Sensitive" />
                         <CheckBox fx:id="wholeWordsCheck" text="Whole Words" />
-                        <Separator orientation="VERTICAL" />
-                        <Button onAction="#handleAdvancedSearch" text="Advanced..." />
                      </children>
                   </HBox>
-                  
+
+                  <!-- Advanced Filters (collapsible) -->
+                  <TitledPane fx:id="advancedFilterPane" text="⚙️ Advanced Filters" expanded="false">
+                     <content>
+                        <VBox spacing="10.0">
+                           <children>
+                              <GridPane hgap="15.0" vgap="8.0">
+                                 <columnConstraints>
+                                    <ColumnConstraints minWidth="110.0" />
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                    <ColumnConstraints minWidth="110.0" />
+                                    <ColumnConstraints hgrow="ALWAYS" />
+                                 </columnConstraints>
+
+                                 <!-- File Type Filter -->
+                                 <Label text="File Type:" GridPane.columnIndex="0"
+                                    GridPane.rowIndex="0" />
+                                 <ComboBox fx:id="fileTypeFilter" prefWidth="160.0"
+                                    GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                                 <!-- Min Size Filter -->
+                                 <Label text="Min Size (KB):" GridPane.columnIndex="2"
+                                    GridPane.rowIndex="0" />
+                                 <TextField fx:id="minSizeField" promptText="e.g. 0"
+                                    prefWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+
+                                 <!-- Max Size Filter -->
+                                 <Label text="Max Size (KB):" GridPane.columnIndex="2"
+                                    GridPane.rowIndex="1" />
+                                 <TextField fx:id="maxSizeField" promptText="e.g. 10000"
+                                    prefWidth="100.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+
+                                 <!-- Status filter -->
+                                 <Label text="Status:" GridPane.columnIndex="0"
+                                    GridPane.rowIndex="1" />
+                                 <ComboBox fx:id="statusFilter" prefWidth="160.0"
+                                    GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              </GridPane>
+                              <HBox spacing="10.0">
+                                 <children>
+                                    <Button onAction="#handleApplyFilters" text="Apply Filters"
+                                       style="-fx-background-color: #FF9800; -fx-text-fill: white;" />
+                                    <Button onAction="#handleClearFilters" text="Clear Filters" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </TitledPane>
+
                   <!-- Progress and Status -->
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
@@ -56,7 +111,7 @@
          </padding>
       </VBox>
    </top>
-   
+
    <center>
       <SplitPane dividerPositions="0.6" orientation="HORIZONTAL">
          <items>
@@ -70,6 +125,7 @@
                         <TableColumn fx:id="typeColumn" prefWidth="60.0" text="Type" />
                         <TableColumn fx:id="sizeColumn" prefWidth="80.0" text="Size" />
                         <TableColumn fx:id="relevanceColumn" prefWidth="80.0" text="Relevance" />
+                        <TableColumn fx:id="statusColumn" prefWidth="80.0" text="Status" />
                      </columns>
                   </TableView>
                </children>
@@ -77,14 +133,15 @@
                   <Insets bottom="10.0" left="10.0" right="5.0" top="10.0" />
                </padding>
             </VBox>
-            
+
             <!-- Document Content Display -->
             <VBox>
                <children>
                   <Label style="-fx-font-weight: bold;" text="Document Content" />
-                  <TextArea fx:id="selectedDocumentContent" editable="false" wrapText="true" VBox.vgrow="ALWAYS"
-                          promptText="Select a document from search results to view its content..."
-                          style="-fx-font-family: monospace;" />
+                  <TextArea fx:id="selectedDocumentContent" editable="false" wrapText="true"
+                     VBox.vgrow="ALWAYS"
+                     promptText="Select a document from search results to view its content..."
+                     style="-fx-font-family: monospace;" />
                </children>
                <padding>
                   <Insets bottom="10.0" left="5.0" right="10.0" top="10.0" />
@@ -93,12 +150,13 @@
          </items>
       </SplitPane>
    </center>
-   
+
    <bottom>
       <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f5f5f5;">
          <children>
-            <Label text="💡 Tip: Use quotation marks for exact phrases, or try different search modes for better results." 
-                   style="-fx-text-fill: #666; -fx-font-style: italic;" />
+            <Label
+               text="💡 Tip: Use 'Advanced Filters' to narrow results by type, size, or status. Export results to CSV using the Export button."
+               style="-fx-text-fill: #666; -fx-font-style: italic;" />
          </children>
          <padding>
             <Insets bottom="5.0" left="15.0" right="15.0" top="5.0" />

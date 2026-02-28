@@ -5,12 +5,19 @@ import com.example.insightbaseai.util.ConfigurationManager;
 import com.example.insightbaseai.util.LoggerUtil;
 import com.example.insightbaseai.util.ThemeManager;
 import com.example.insightbaseai.util.ValidationUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.collections.FXCollections;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SettingsController {
@@ -49,6 +56,22 @@ public class SettingsController {
     private CheckBox autoSaveCheck;
     @FXML
     private ComboBox<String> themeCombo;
+    @FXML
+    private TextArea systemInfoArea;
+
+    // FXML Controls - Statistics
+    @FXML
+    private Label totalDocsLabel;
+    @FXML
+    private Label totalChunksLabel;
+    @FXML
+    private Label totalQueriesLabel;
+    @FXML
+    private Label avgResponseTimeLabel;
+    @FXML
+    private Label lastQueryTimeLabel;
+    @FXML
+    private Label historySizeLabel;
 
     // FXML Controls - Advanced Settings
     @FXML
@@ -67,8 +90,6 @@ public class SettingsController {
     // FXML Controls - Statistics and Info
     @FXML
     private VBox statisticsContainer;
-    @FXML
-    private TextArea systemInfoArea;
 
     // FXML Controls - Actions
     @FXML
@@ -283,12 +304,66 @@ public class SettingsController {
 
     @FXML
     private void handleExportSettings() {
-        // Placeholder for export functionality
-        Alert infoAlert = new Alert(Alert.AlertType.INFORMATION);
-        infoAlert.setTitle("Export Settings");
-        infoAlert.setHeaderText("Feature Coming Soon");
-        infoAlert.setContentText("Settings export functionality will be available in a future version.");
-        infoAlert.showAndWait();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Export Settings");
+        fileChooser.setInitialFileName("insightbase_settings_" +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".json");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+
+        File file = fileChooser.showSaveDialog(null);
+        if (file == null)
+            return;
+
+        try {
+            // Build a settings map from what is currently saved in config
+            Map<String, Object> settingsMap = new LinkedHashMap<>();
+            settingsMap.put("exportedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            settingsMap.put("appVersion", "1.0-SNAPSHOT");
+
+            Map<String, Object> apiSection = new LinkedHashMap<>();
+            apiSection.put("provider", config.getAIProvider());
+            apiSection.put("openAIModel", config.getOpenAIModel());
+            apiSection.put("huggingFaceModel", config.getHuggingFaceModel());
+            apiSection.put("openAIApiKey", "[REDACTED]");
+            apiSection.put("huggingFaceApiKey", "[REDACTED]");
+            settingsMap.put("api", apiSection);
+
+            Map<String, Object> appSection = new LinkedHashMap<>();
+            appSection.put("maxChatHistory", config.getMaxChatHistory());
+            appSection.put("theme", config.getTheme());
+            appSection.put("loggingEnabled", config.isLoggingEnabled());
+            appSection.put("autoSave", config.isAutoSaveEnabled());
+            settingsMap.put("application", appSection);
+
+            Map<String, Object> ragSection = new LinkedHashMap<>();
+            ragSection.put("chunkSize", config.getChunkSize());
+            ragSection.put("chunkOverlap", config.getChunkOverlap());
+            ragSection.put("maxRetrievalResults", config.getMaxRetrievalResults());
+            settingsMap.put("rag", ragSection);
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            mapper.writeValue(file, settingsMap);
+
+            connectionStatusLabel.setText("Settings exported to: " + file.getName());
+            logger.logUserAction("Settings Export", "Exported to: " + file.getAbsolutePath());
+
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Export Successful");
+            ok.setHeaderText("Settings exported successfully!");
+            ok.setContentText("Saved to: " + file.getAbsolutePath() +
+                    "\n\nNote: API keys are redacted for security.");
+            ok.showAndWait();
+
+        } catch (Exception e) {
+            logger.error("Failed to export settings", e);
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setTitle("Export Failed");
+            err.setHeaderText("Could not export settings");
+            err.setContentText(e.getMessage());
+            err.showAndWait();
+        }
     }
 
     @FXML
@@ -436,27 +511,39 @@ public class SettingsController {
         connectionStatusLabel.setText("");
     }
 
+    @FXML
     private void updateStatistics() {
         if (aiService == null)
             return;
 
         Map<String, Object> stats = aiService.getStatistics();
+        if (stats == null)
+            return;
 
-        StringBuilder statsText = new StringBuilder();
-        statsText.append("Application Statistics:\n");
-        statsText.append("• Total Queries: ").append(stats.get("totalQueries")).append("\n");
-        statsText.append("• Total Documents: ").append(stats.get("totalDocuments")).append("\n");
-        statsText.append("• Total Chunks: ").append(stats.get("totalChunks")).append("\n");
-        statsText.append("• Chat History Size: ").append(stats.get("chatHistorySize")).append("\n");
+        // Update UI Labels
+        if (totalDocsLabel != null)
+            totalDocsLabel.setText(String.valueOf(stats.getOrDefault("totalDocuments", 0)));
+        if (totalChunksLabel != null)
+            totalChunksLabel.setText(String.valueOf(stats.getOrDefault("totalChunks", 0)));
+        if (totalQueriesLabel != null)
+            totalQueriesLabel.setText(String.valueOf(stats.getOrDefault("totalQueries", 0)));
 
-        if (stats.get("averageResponseTime") != null) {
-            double avgTime = (Double) stats.get("averageResponseTime");
-            statsText.append("• Avg Response Time: ").append(String.format("%.2f ms", avgTime)).append("\n");
+        if (avgResponseTimeLabel != null) {
+            double avgTime = (Double) stats.getOrDefault("averageResponseTime", 0.0);
+            avgResponseTimeLabel.setText(String.format("%.2f ms", avgTime));
         }
 
-        // Add to statistics display (if we have a text area for it)
-        // For now, we'll just log it
-        logger.info("Statistics updated: " + statsText.toString());
+        if (lastQueryTimeLabel != null) {
+            long lastTime = (Long) stats.getOrDefault("lastQueryTime", 0L);
+            lastQueryTimeLabel.setText(lastTime + " ms");
+        }
+
+        if (historySizeLabel != null) {
+            int histSize = (Integer) stats.getOrDefault("chatHistorySize", 0);
+            historySizeLabel.setText(histSize + " messages");
+        }
+
+        logger.info("Statistics UI updated successfully from AIService data.");
     }
 
     private void updateSystemInfo() {

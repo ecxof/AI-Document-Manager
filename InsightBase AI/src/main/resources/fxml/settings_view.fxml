@@ -83,7 +83,8 @@
 
                                     <Label text="HF Model:" GridPane.columnIndex="0"
                                        GridPane.rowIndex="1" />
-                                    <TextField fx:id="hfModelField" promptText="e.g. meta-llama/Llama-3.1-8B-Instruct"
+                                    <TextField fx:id="hfModelField"
+                                       promptText="e.g. meta-llama/Llama-3.1-8B-Instruct"
                                        GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                  </GridPane>
                               </children>
@@ -181,12 +182,58 @@
                   </VBox>
 
                   <!-- Statistics Section -->
-                  <VBox fx:id="statisticsContainer" spacing="10.0" styleClass="section-container">
+                  <VBox fx:id="statisticsContainer" spacing="15.0" styleClass="section-container">
                      <children>
-                        <Label styleClass="subtitle-label" text="📈 Application Statistics" />
+                        <Label styleClass="subtitle-label" text="📈 Real-Time Analytics" />
                         <Separator />
-                        <Label styleClass="muted-label"
-                           text="Statistics will be displayed here after using the application." />
+
+                        <GridPane hgap="20.0" vgap="15.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="NEVER" minWidth="150.0" />
+                              <ColumnConstraints hgrow="ALWAYS" />
+                              <ColumnConstraints hgrow="NEVER" minWidth="150.0" />
+                              <ColumnConstraints hgrow="ALWAYS" />
+                           </columnConstraints>
+
+                           <children>
+                              <Label text="Total Documents:" GridPane.columnIndex="0"
+                                 GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+                              <Label fx:id="totalDocsLabel" text="0" GridPane.columnIndex="1"
+                                 GridPane.rowIndex="0" />
+
+                              <Label text="Total Chunks:" GridPane.columnIndex="2"
+                                 GridPane.rowIndex="0" style="-fx-font-weight: bold;" />
+                              <Label fx:id="totalChunksLabel" text="0" GridPane.columnIndex="3"
+                                 GridPane.rowIndex="0" />
+
+                              <Label text="Total Queries:" GridPane.columnIndex="0"
+                                 GridPane.rowIndex="1" style="-fx-font-weight: bold;" />
+                              <Label fx:id="totalQueriesLabel" text="0" GridPane.columnIndex="1"
+                                 GridPane.rowIndex="1" />
+
+                              <Label text="Avg Response Time:" GridPane.columnIndex="2"
+                                 GridPane.rowIndex="1" style="-fx-font-weight: bold;" />
+                              <Label fx:id="avgResponseTimeLabel" text="0 ms"
+                                 GridPane.columnIndex="3" GridPane.rowIndex="1" />
+
+                              <Label text="Last Search Time:" GridPane.columnIndex="0"
+                                 GridPane.rowIndex="2" style="-fx-font-weight: bold;" />
+                              <Label fx:id="lastQueryTimeLabel" text="0 ms" GridPane.columnIndex="1"
+                                 GridPane.rowIndex="2" />
+
+                              <Label text="Chat History Size:" GridPane.columnIndex="2"
+                                 GridPane.rowIndex="2" style="-fx-font-weight: bold;" />
+                              <Label fx:id="historySizeLabel" text="0 messages"
+                                 GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                           </children>
+                        </GridPane>
+
+                        <HBox alignment="CENTER_RIGHT">
+                           <children>
+                              <Button fx:id="refreshStatsButton" onAction="#updateStatistics"
+                                 text="🔄 Refresh Stats" style="-fx-font-size: 11px;" />
+                           </children>
+                        </HBox>
                      </children>
                   </VBox>
                </children>
