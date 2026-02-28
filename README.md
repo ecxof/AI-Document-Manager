@@ -8,7 +8,7 @@
 
 ### ✅ Implemented Core Functionalities
 - 💬 **AI Chat Interface** — Real-time conversational AI using LangChain4j + OpenAI GPT & Hugging Face models
-- 📂 **Advanced Document Management** — Upload, process, and manage TXT, PDF*, DOCX*, MD, Java, XML, JSON, YAML files
+- 📂 **Advanced Document Management** — Upload, process, and manage TXT, PDF, DOCX, MD, Java, XML, JSON, YAML files
 - 🔍 **Intelligent Search** — Full-text search with advanced filtering and export capabilities
 - ⚙️ **Comprehensive Settings Panel** — Complete API configuration, preferences, and system management
 - 📊 **Statistics & Monitoring** — Real-time analytics, performance tracking, and system information
@@ -70,7 +70,7 @@ InsightBaseAI/
 ### **Core Technologies**
 - **Language:** Java 21 LTS (Latest Long-Term Support)
 - **Frontend:** JavaFX 23.0.1 with FXML
-- **AI Framework:** LangChain4j 1.0.1
+- **AI Framework:** LangChain4j 0.35.0
 - **LLM Providers:** OpenAI (GPT-4o-mini, GPT-4o) & Hugging Face (Llama-3.1, et al.)
 - **Build Tool:** Maven 3.9.11
 - **Vector Storage:** In-memory embedding store with extensible architecture
@@ -149,7 +149,7 @@ mvn compile && mvn javafx:run
    - Set application preferences and theme options
 
 2. **📋 Document Management (Admin)**
-   - Upload documents (TXT, PDF*, DOCX*, MD, Java, XML, JSON, YAML)
+   - Upload documents (TXT, PDF, DOCX, MD, Java, XML, JSON, YAML)
    - View document statistics and processing status
    - Manage knowledge base collections
 
@@ -199,10 +199,8 @@ mvn compile && mvn javafx:run
 ## � Future Enhancements
 
 ### **Planned Improvements**
-- 🔄 **PDF & DOCX Processing** — Complete implementation of document parsers
 - 🌐 **External Vector Databases** — Integration with FAISS, Chroma, or Pinecone
-- 🎨 **Theme System** — Dark mode and custom theme support
-- 📈 **Advanced Analytics** — Detailed usage statistics and performance dashboards
+- 🎨 **Theme System** — Custom theme support beyond dark/light
 - 🔌 **Plugin Architecture** — Extensible system for custom document processors
 - 🌍 **Multi-language Support** — Internationalization (i18n) capabilities
 

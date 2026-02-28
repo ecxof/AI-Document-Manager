@@ -4,28 +4,45 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="10" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
     fx:controller="com.example.insightbaseai.controller.ChatController"
     styleClass="content-container">
 
-    <!-- Chat Messages Area -->
-    <ScrollPane fx:id="chatScrollPane" prefHeight="400" prefWidth="600" fitToWidth="true"
-        hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="chat-scroll-pane">
-        <VBox fx:id="chatContainer" spacing="10" styleClass="chat-container">
+    <!-- Top: Header bar -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="chat-header">
             <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
+                <Insets top="10" right="20" bottom="10" left="20" />
             </padding>
-        </VBox>
-    </ScrollPane>
+            <Label text="💬 AI Chat" style="-fx-font-size: 16px; -fx-font-weight: bold;"
+                HBox.hgrow="ALWAYS" />
+            <Button fx:id="clearChatButton" onAction="#handleClearChat" text="🗑 Clear Chat"
+                style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5;" />
+        </HBox>
+    </top>
 
-    <!-- Input Area -->
-    <HBox spacing="10" alignment="CENTER" styleClass="chat-input-area">
-        <padding>
-            <Insets top="10" right="20" bottom="10" left="20" />
-        </padding>
-        <TextField fx:id="inputField" promptText="Type your message..." prefWidth="500"
-            styleClass="chat-text-field" />
-        <Button fx:id="sendButton" text="Send" styleClass="button-primary chat-send-button" />
-    </HBox>
+    <!-- Center: Chat Messages Area (fills all remaining space) -->
+    <center>
+        <ScrollPane fx:id="chatScrollPane" fitToWidth="true"
+            hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="chat-scroll-pane">
+            <VBox fx:id="chatContainer" spacing="10" styleClass="chat-container">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10" />
+                </padding>
+            </VBox>
+        </ScrollPane>
+    </center>
 
-</VBox>
+    <!-- Bottom: Input Area -->
+    <bottom>
+        <HBox spacing="10" alignment="CENTER" styleClass="chat-input-area">
+            <padding>
+                <Insets top="10" right="20" bottom="10" left="20" />
+            </padding>
+            <TextField fx:id="inputField" promptText="Type your message... (Press Enter to send)"
+                HBox.hgrow="ALWAYS" styleClass="chat-text-field" />
+            <Button fx:id="sendButton" text="Send ➤" styleClass="button-primary chat-send-button" />
+        </HBox>
+    </bottom>
+
+</BorderPane>

@@ -73,10 +73,29 @@ public class MainController {
         mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab != null) {
                 loadTabContent(newTab);
+                notifyViewActivated(newTab);
                 LoggerUtil.getInstance().log(LoggerUtil.LogLevel.INFO, "MainController",
                         "Switched to tab: " + newTab.getText());
             }
         });
+    }
+
+    private void notifyViewActivated(Tab tab) {
+        if (tab == null)
+            return;
+        String tabId = tab.getId();
+        switch (tabId) {
+            case "adminTab" -> {
+                if (adminController != null)
+                    adminController.onViewActivated();
+            }
+            case "settingsTab" -> {
+                if (settingsController != null)
+                    settingsController.onViewActivated();
+            }
+            default -> {
+                /* no-op for chat and search */ }
+        }
     }
 
     /**
@@ -179,6 +198,7 @@ public class MainController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/settings_view.fxml"));
         Node content = loader.load();
         settingsController = loader.getController();
+        settingsController.setAIService(com.example.insightbaseai.service.AIService.getInstance());
         return content;
     }
 

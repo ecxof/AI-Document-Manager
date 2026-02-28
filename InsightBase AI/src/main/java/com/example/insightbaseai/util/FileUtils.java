@@ -430,7 +430,7 @@ public class FileUtils {
         String extension = getFileExtension(file.getName()).toLowerCase();
         if (!isSupportedFile(file.getName())) {
             errors.add("Unsupported file type: " + extension +
-                    ". Supported formats: TXT, MD, Java, XML, JSON, YAML, Properties");
+                    ". Supported formats: TXT, PDF, DOCX, MD, Java, XML, JSON, YAML, Properties");
             return new FileValidationResult(false, errors, warnings);
         }
 
@@ -527,7 +527,7 @@ public class FileUtils {
 
         if (!isSupportedFile(file.getName())) {
             throw new IOException(
-                    "Unsupported file format. Supported formats: TXT, MD, Java, XML, JSON, YAML, Properties (PDF and DOCX coming soon): "
+                    "Unsupported file format. Supported formats: TXT, PDF, DOCX, MD, Java, XML, JSON, YAML, Properties: "
                             + file.getName());
         }
     }
