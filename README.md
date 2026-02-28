@@ -115,6 +115,8 @@ InsightBaseAI/
 4. **Run InsightBase AI**
    ```bash
    mvn javafx:run
+   find the Launcher.java file in src\main\java\com\example\insightbaseai\Launcher.java
+   and run the application
    ```
 
 5. **Initial Configuration**
