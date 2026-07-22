@@ -1,0 +1,35 @@
+# Maven build output
+target/
+**/target/
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+logs/
+
+# IDE — IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE — Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IDE — VS Code (keep shared settings if the team wants them; ignore local ones)
+.vscode/*
+!.vscode/settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local application data / secrets — never commit API keys
+.insightbaseai/
+config.properties
+*.env
