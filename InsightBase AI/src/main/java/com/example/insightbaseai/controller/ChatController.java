@@ -55,6 +55,11 @@ public class ChatController {
     }
 
     private void handleSend() {
+        // Ignore new sends while a response is already in flight (the button is
+        // disabled during processing; Enter could otherwise trigger a second one).
+        if (sendButton.isDisable())
+            return;
+
         String userInput = inputField.getText().trim();
         if (userInput.isEmpty())
             return;
@@ -62,6 +67,7 @@ public class ChatController {
         // INSTANTLY show user message and clear input - happens immediately
         addUserMessage(userInput);
         inputField.clear();
+        setInputEnabled(false);
 
         // Start thinking animation
         startThinkingAnimation();
@@ -76,23 +82,32 @@ public class ChatController {
             @Override
             protected void succeeded() {
                 // This runs on JavaFX thread when AI response is ready
-                Platform.runLater(() -> {
-                    stopThinkingAnimation();
-                    addAIMessage(getValue());
-                });
+                stopThinkingAnimation();
+                addAIMessage(getValue());
+                setInputEnabled(true);
             }
 
             @Override
             protected void failed() {
-                Platform.runLater(() -> {
-                    stopThinkingAnimation();
-                    addAIMessage("Sorry, I encountered an error. Please try again.");
-                });
+                stopThinkingAnimation();
+                addAIMessage("Sorry, I encountered an error. Please try again.");
+                setInputEnabled(true);
             }
         };
 
-        // Run AI task in background thread
-        new Thread(aiTask).start();
+        // Run AI task in a daemon background thread so a pending request never
+        // blocks application shutdown.
+        Thread aiThread = new Thread(aiTask, "ai-chat-response");
+        aiThread.setDaemon(true);
+        aiThread.start();
+    }
+
+    private void setInputEnabled(boolean enabled) {
+        sendButton.setDisable(!enabled);
+        inputField.setDisable(!enabled);
+        if (enabled) {
+            inputField.requestFocus();
+        }
     }
 
     private void addUserMessage(String message) {

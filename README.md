@@ -98,7 +98,8 @@ InsightBaseAI/
 1. **Clone or Download the Project**
    ```bash
    git clone https://github.com/yourusername/insightbaseai.git
-   cd InsightBaseAI
+   # The Maven project (pom.xml) lives in the "InsightBase AI" sub-folder:
+   cd "InsightBase-AI/InsightBase AI"
    ```
 
 2. **Verify Java Version**
@@ -107,17 +108,19 @@ InsightBaseAI/
    # Should show Java 21 or higher
    ```
 
-3. **Build the Application**
+3. **Build and Test the Application**
    ```bash
-   mvn clean compile
+   mvn clean test
    ```
 
 4. **Run InsightBase AI**
    ```bash
    mvn javafx:run
-   find the Launcher.java file in src\main\java\com\example\insightbaseai\Launcher.java
-   and run the application
    ```
+   Alternatively, run it from your IDE using the
+   `com.example.insightbaseai.Launcher` class. `Launcher` is a thin wrapper whose
+   `main()` calls `MainApp.main()`; it exists so the app can be started from an IDE
+   without adding JavaFX module-path VM arguments.
 
 5. **Initial Configuration**
    - Open the **⚙️ Settings** tab

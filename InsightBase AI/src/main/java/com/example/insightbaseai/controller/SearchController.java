@@ -192,6 +192,12 @@ public class SearchController {
     }
 
     private void performSearch(String query) {
+        // Read JavaFX controls on the FX thread; the Task body runs on a background
+        // thread and must not touch the scene graph.
+        final String searchMode = searchModeCombo.getValue();
+        final boolean caseSensitive = caseSensitiveCheck.isSelected();
+        final boolean wholeWords = wholeWordsCheck.isSelected();
+
         Task<List<DocumentEntry>> searchTask = new Task<List<DocumentEntry>>() {
             @Override
             protected List<DocumentEntry> call() throws Exception {
@@ -199,10 +205,6 @@ public class SearchController {
                 updateProgress(-1, -1);
 
                 Thread.sleep(300);
-
-                String searchMode = searchModeCombo.getValue();
-                boolean caseSensitive = caseSensitiveCheck.isSelected();
-                boolean wholeWords = wholeWordsCheck.isSelected();
 
                 return performActualSearch(query, searchMode, caseSensitive, wholeWords);
             }

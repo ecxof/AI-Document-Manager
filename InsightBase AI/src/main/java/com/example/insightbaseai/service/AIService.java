@@ -34,11 +34,6 @@ public class AIService {
     private static final LoggerUtil logger = LoggerUtil.getInstance();
     private static AIService instance;
 
-    // Maximum number of retrieved context chunks to inject
-    private static final int MAX_CONTEXT_CHUNKS = 5;
-    // Minimum relevance score to include a chunk (0.0 – 1.0)
-    private static final double MIN_RELEVANCE_SCORE = 0.5;
-
     public interface Assistant {
         String chat(String message);
     }
@@ -84,14 +79,35 @@ public class AIService {
             logger.info("Initializing local embedding model (All-MiniLM-L6-v2)...");
             this.embeddingModel = new AllMiniLmL6V2QuantizedEmbeddingModel();
             this.embeddingStore = new InMemoryEmbeddingStore<>();
-            // Split docs into ~500-char chunks with a 50-char overlap
-            this.documentSplitter = DocumentSplitters.recursive(500, 50);
+            this.documentSplitter = createDocumentSplitter();
             logger.info("Embedding model initialized successfully.");
         } catch (Exception e) {
             logger.error("Failed to initialize embedding model — RAG will be disabled.", e);
             this.embeddingModel = null;
             this.embeddingStore = null;
         }
+    }
+
+    /**
+     * Build a document splitter using the chunk size / overlap configured in the
+     * Settings panel, so the RAG sliders actually take effect. Falls back to sane
+     * defaults if the configured values are out of range.
+     */
+    private DocumentSplitter createDocumentSplitter() {
+        ConfigurationManager config = ConfigurationManager.getInstance();
+        int chunkSize = config.getChunkSize();
+        int overlap = config.getChunkOverlap();
+
+        // Guard against invalid combinations that would break the splitter.
+        if (chunkSize < 100) {
+            chunkSize = 500;
+        }
+        if (overlap < 0 || overlap >= chunkSize) {
+            overlap = Math.min(50, chunkSize / 10);
+        }
+
+        logger.info("Configuring document splitter: chunkSize=" + chunkSize + ", overlap=" + overlap);
+        return DocumentSplitters.recursive(chunkSize, overlap);
     }
 
     private void initializeModels() {
@@ -237,11 +253,15 @@ public class AIService {
             logger.info("Performing vector similarity search for: "
                     + userQuestion.substring(0, Math.min(60, userQuestion.length())));
 
+            ConfigurationManager config = ConfigurationManager.getInstance();
+            int maxResults = Math.max(1, config.getMaxRetrievalResults());
+            double minScore = config.getSimilarityThreshold();
+
             Embedding queryEmbedding = embeddingModel.embed(userQuestion).content();
             EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
                     .queryEmbedding(queryEmbedding)
-                    .maxResults(MAX_CONTEXT_CHUNKS)
-                    .minScore(MIN_RELEVANCE_SCORE)
+                    .maxResults(maxResults)
+                    .minScore(minScore)
                     .build();
 
             EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
@@ -425,6 +445,11 @@ public class AIService {
     public void refreshConfiguration() {
         logger.logAIService("Configuration Refresh", "Refreshing AI service configuration");
         initializeModels();
+        // Pick up any changes to the RAG chunk size / overlap for documents added
+        // from now on (already-embedded documents keep their original chunking).
+        if (embeddingModel != null) {
+            this.documentSplitter = createDocumentSplitter();
+        }
         logger.logAIService("Configuration Refresh", "AI service configuration refreshed successfully");
     }
 
