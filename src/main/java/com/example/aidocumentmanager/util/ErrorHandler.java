@@ -238,6 +238,10 @@ public class ErrorHandler {
         
         alert.getDialogPane().setExpandableContent(expContent);
         
+        // Owner, sizing and resizability must be applied before the dialog is
+        // shown; showAndWait() blocks until it is dismissed.
+        configureAlert(alert);
+        
         // Add recovery button if recovery action is provided
         if (recoveryAction != null) {
             ButtonType retryButton = new ButtonType("Retry");
@@ -254,8 +258,6 @@ public class ErrorHandler {
         } else {
             alert.showAndWait();
         }
-        
-        configureAlert(alert);
     }
     
     /**

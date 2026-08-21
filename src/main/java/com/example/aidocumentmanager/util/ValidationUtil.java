@@ -241,7 +241,7 @@ public class ValidationUtil {
                 return fieldName + " contains invalid characters or is too long.";
             }
             case "apikey" -> {
-                return fieldName + " must be a valid OpenAI API key (starts with 'sk-' and 48 characters long).";
+                return fieldName + " must be a valid OpenAI API key (starts with 'sk-' followed by at least 20 characters).";
             }
             case "length" -> {
                 return fieldName + " length is not within the allowed range.";
