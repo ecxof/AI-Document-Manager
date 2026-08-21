@@ -333,6 +333,14 @@ public class FileUtils {
                 chunks.add(chunk);
             }
 
+            // The final chunk reached the end of the text, so there is nothing
+            // left to emit. Without this the loop falls back to start + 1 and
+            // walks forward one character at a time, producing one chunk per
+            // remaining character.
+            if (end >= textLength) {
+                break;
+            }
+
             // Move to next chunk with overlap
             start = Math.max(start + 1, end - overlapSize);
         }
