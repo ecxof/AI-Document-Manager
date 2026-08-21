@@ -1,6 +1,6 @@
-# InsightBase AI
+# AI Document Manager
 
-**InsightBase AI** is an intelligent knowledge management desktop application built with **JavaFX 23**, **LangChain4j**, and **OpenAI / Hugging Face** models. It lets you chat with, search, and retrieve contextual answers from your own document collections using **Retrieval-Augmented Generation (RAG)**.
+**AI Document Manager** is an intelligent knowledge management desktop application built with **JavaFX 23**, **LangChain4j**, and **OpenAI / Hugging Face** models. It lets you chat with, search, and retrieve contextual answers from your own document collections using **Retrieval-Augmented Generation (RAG)**.
 
 Documents are embedded **locally** with a bundled quantized ONNX model, so indexing and similarity search need no network and no API key. Only the chat step calls a hosted LLM.
 
@@ -28,44 +28,43 @@ Without an API key the application still starts and remains fully navigable. Cha
 
 ## Project Architecture (MVC)
 
-The Maven project lives in the `InsightBase AI/` sub-folder (note the space). Run all `mvn` commands from inside it, not from the repository root.
+The Maven project sits at the repository root, so `mvn` commands run from there.
 
 ```
 AI-Document-Manager/
 ├── README.md
-└── InsightBase AI/                          <- Maven project root (pom.xml lives here)
-    ├── pom.xml
-    └── src/
-        ├── main/
-        │   ├── java/com/example/insightbaseai/
-        │   │   ├── MainApp.java             -> JavaFX Application entry point
-        │   │   ├── Launcher.java            -> IDE-friendly wrapper around MainApp
-        │   │   ├── controller/
-        │   │   │   ├── MainController.java      -> Navigation & main window
-        │   │   │   ├── ChatController.java      -> AI chat interface
-        │   │   │   ├── AdminController.java     -> Document management
-        │   │   │   ├── SearchController.java    -> Search + result export
-        │   │   │   └── SettingsController.java  -> Configuration management
-        │   │   ├── model/
-        │   │   │   ├── ChatMessage.java         -> Chat data structure
-        │   │   │   ├── DocumentEntry.java       -> Document metadata & statistics
-        │   │   │   └── KnowledgeBase.java       -> Document collection + statistics
-        │   │   ├── service/
-        │   │   │   └── AIService.java           -> RAG pipeline (singleton)
-        │   │   └── util/
-        │   │       ├── FileUtils.java           -> Multi-format text extraction
-        │   │       ├── LoggerUtil.java          -> Logging facade
-        │   │       ├── ValidationUtil.java      -> Input validation
-        │   │       ├── ErrorHandler.java        -> Error dialogs & handling
-        │   │       ├── ConfigurationManager.java -> Settings persistence
-        │   │       └── ThemeManager.java        -> Light/Dark/System theming
-        │   └── resources/
-        │       ├── fxml/                        -> main, chat, admin, search, settings views
-        │       ├── styles/                      -> application.css, simple.css
-        │       └── log4j2.xml                   -> Logging configuration
-        └── test/java/com/example/insightbaseai/
-            ├── model/DocumentEntryTest.java
-            └── util/FileUtilsTest.java, ValidationUtilTest.java
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/com/example/aidocumentmanager/
+    │   │   ├── MainApp.java             -> JavaFX Application entry point
+    │   │   ├── Launcher.java            -> IDE-friendly wrapper around MainApp
+    │   │   ├── controller/
+    │   │   │   ├── MainController.java      -> Navigation & main window
+    │   │   │   ├── ChatController.java      -> AI chat interface
+    │   │   │   ├── AdminController.java     -> Document management
+    │   │   │   ├── SearchController.java    -> Search + result export
+    │   │   │   └── SettingsController.java  -> Configuration management
+    │   │   ├── model/
+    │   │   │   ├── ChatMessage.java         -> Chat data structure
+    │   │   │   ├── DocumentEntry.java       -> Document metadata & statistics
+    │   │   │   └── KnowledgeBase.java       -> Document collection + statistics
+    │   │   ├── service/
+    │   │   │   └── AIService.java           -> RAG pipeline (singleton)
+    │   │   └── util/
+    │   │       ├── FileUtils.java           -> Multi-format text extraction
+    │   │       ├── LoggerUtil.java          -> Logging facade
+    │   │       ├── ValidationUtil.java      -> Input validation
+    │   │       ├── ErrorHandler.java        -> Error dialogs & handling
+    │   │       ├── ConfigurationManager.java -> Settings persistence
+    │   │       └── ThemeManager.java        -> Light/Dark/System theming
+    │   └── resources/
+    │       ├── fxml/                        -> main, chat, admin, search, settings views
+    │       ├── styles/                      -> application.css, simple.css
+    │       └── log4j2.xml                   -> Logging configuration
+    └── test/java/com/example/aidocumentmanager/
+        ├── model/DocumentEntryTest.java
+        └── util/FileUtilsTest.java, ValidationUtilTest.java
 ```
 
 ---
@@ -107,8 +106,7 @@ AI-Document-Manager/
 
    ```bash
    git clone https://github.com/ecxof/AI-Document-Manager.git
-   # The Maven project (pom.xml) lives in the "InsightBase AI" sub-folder:
-   cd "AI-Document-Manager/InsightBase AI"
+   cd AI-Document-Manager
    ```
 
 2. **Verify the Java version**
@@ -124,13 +122,13 @@ AI-Document-Manager/
    mvn clean test
    ```
 
-4. **Run InsightBase AI**
+4. **Run AI Document Manager**
 
    ```bash
    mvn javafx:run
    ```
 
-   Alternatively, run it from your IDE using the `com.example.insightbaseai.Launcher`
+   Alternatively, run it from your IDE using the `com.example.aidocumentmanager.Launcher`
    class. `Launcher` is a thin wrapper whose `main()` calls `MainApp.main()`; it exists
    so the app can be started from an IDE without adding JavaFX module-path VM arguments.
 
@@ -161,7 +159,7 @@ mvn compile && mvn javafx:run
 On first launch the application creates a directory in your home folder:
 
 ```
-~/.insightbaseai/
+~/.aidocumentmanager/
 ├── config.properties     # Provider, API keys, RAG settings, window state
 ├── documents/            # Copies of uploaded documents
 └── logs/                 # Application logs
@@ -169,7 +167,7 @@ On first launch the application creates a directory in your home folder:
 
 **API keys are stored in plain text** in `config.properties`. Treat that file as a
 secret, and do not commit it. The repository's `.gitignore` already excludes
-`config.properties` and `.insightbaseai/`.
+`config.properties` and `.aidocumentmanager/`.
 
 ---
 
@@ -215,7 +213,7 @@ secret, and do not commit it. The repository's `.gitignore` already excludes
 
 - **The vector store is not persistent.** `InMemoryEmbeddingStore` is rebuilt on every launch, so documents must be re-indexed each session
 - **Removing a document does not remove its vectors.** `InMemoryEmbeddingStore` has no delete-by-id, so a removed document's chunks can still be retrieved until restart. An external vector database would resolve this
-- **API keys are stored in plain text** in `~/.insightbaseai/config.properties`
+- **API keys are stored in plain text** in `~/.aidocumentmanager/config.properties`
 - **Test coverage is partial.** Unit tests cover the model and utility layers; the controllers and `AIService` are not covered
 
 ---
@@ -257,7 +255,7 @@ See [Known Limitations](#known-limitations) for what is not production-ready.
 
 ## Development Team
 
-**Project:** InsightBase AI - Intelligent Knowledge Management System
+**Project:** AI Document Manager - Intelligent Knowledge Management System
 **Course:** Advanced Programming (ITS66704)
 **Institution:** Taylor's University
 **Academic Year:** 2025/2026
