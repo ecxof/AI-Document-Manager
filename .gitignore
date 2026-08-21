@@ -30,6 +30,6 @@ bin/
 Thumbs.db
 
 # Local application data / secrets — never commit API keys
-.insightbaseai/
+.aidocumentmanager/
 config.properties
 *.env
