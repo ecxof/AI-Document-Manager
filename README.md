@@ -1,135 +1,148 @@
-# 🧠 InsightBase AI
+# InsightBase AI
 
-**InsightBase AI** is a complete, professional-grade intelligent knowledge management desktop application built with **JavaFX 23**, **LangChain4j**, and **OpenAI & Hugging Face AI models**. It enables users to chat, search, and retrieve contextual answers from custom document collections using **Retrieval-Augmented Generation (RAG)** technology.
+**InsightBase AI** is an intelligent knowledge management desktop application built with **JavaFX 23**, **LangChain4j**, and **OpenAI / Hugging Face** models. It lets you chat with, search, and retrieve contextual answers from your own document collections using **Retrieval-Augmented Generation (RAG)**.
 
----
-
-## 🚀 Features
-
-### ✅ Implemented Core Functionalities
-- 💬 **AI Chat Interface** — Real-time conversational AI using LangChain4j + OpenAI GPT & Hugging Face models
-- 📂 **Advanced Document Management** — Upload, process, and manage TXT, PDF, DOCX, MD, Java, XML, JSON, YAML files
-- 🔍 **Intelligent Search** — Full-text search with advanced filtering and export capabilities
-- ⚙️ **Comprehensive Settings Panel** — Complete API configuration, preferences, and system management
-- 📊 **Statistics & Monitoring** — Real-time analytics, performance tracking, and system information
-- 🎨 **Professional UI Design** — Modern, responsive interface with comprehensive CSS styling
-- �️ **Robust Error Handling** — User-friendly error messages and graceful failure recovery
-- 💾 **Persistent Configuration** — Automatic settings management and window state preservation
-
-### 🔧 Advanced Features
-- 🔄 **Document Processing Pipeline** — Text extraction, chunking, and validation with detailed feedback
-- 🌐 **Multi-format Support** — Extensible architecture for various document formats
-- 📈 **Performance Optimization** — Efficient processing with progress tracking and memory management
-- � **Input Validation** — Comprehensive validation for all user inputs and configurations
-- 📝 **Comprehensive Logging** — Detailed application logging with performance metrics
+Documents are embedded **locally** with a bundled quantized ONNX model, so indexing and similarity search need no network and no API key. Only the chat step calls a hosted LLM.
 
 ---
 
-## 🏗️ Project Architecture (MVC Pattern)
+## Features
 
-### **Complete Implementation Structure**
+### Core Functionality
+
+- **AI Chat Interface** - Conversational AI over your documents via LangChain4j, using OpenAI or Hugging Face models
+- **Document Management** - Upload and process TXT, PDF, DOCX, MD, Java, XML, JSON, YAML, and .properties files
+- **Local Embeddings** - Text is embedded on your machine with `all-MiniLM-L6-v2` (quantized ONNX); no data leaves the machine during indexing
+- **Intelligent Search** - Full-text search across the knowledge base with filtering and result export
+- **Settings Panel** - Provider and API key configuration, RAG tuning (chunk size, overlap, retrieval count, similarity threshold), and preferences
+- **Statistics & Monitoring** - Knowledge base statistics, real-time analytics, and system information
+- **Theming** - Light, Dark, and System Default themes
+- **Error Handling** - User-friendly error messages with specific guidance for auth, model, and quota failures
+- **Persistent Configuration** - Settings and window state saved between sessions
+
+### Demo Mode
+
+Without an API key the application still starts and remains fully navigable. Chat falls back to a built-in mock assistant that explains how to configure a key, while document upload, indexing, and search continue to work normally.
+
+---
+
+## Project Architecture (MVC)
+
+The Maven project lives in the `InsightBase AI/` sub-folder (note the space). Run all `mvn` commands from inside it, not from the repository root.
+
 ```
-InsightBaseAI/
-├── src/main/java/com/example/insightbaseai/
-│   ├── MainApp.java                     → Application entry point
-│   ├── controller/
-│   │   ├── MainController.java          → Navigation & main window management
-│   │   ├── ChatController.java          → AI chat interface controller
-│   │   ├── AdminController.java         → Document management controller
-│   │   ├── SearchController.java        → Advanced search functionality
-│   │   └── SettingsController.java      → Configuration management
-│   ├── model/
-│   │   ├── ChatMessage.java             → Chat data structure with validation
-│   │   ├── DocumentEntry.java           → Document metadata & statistics
-│   │   └── KnowledgeBase.java           → Knowledge management with RAG support
-│   ├── service/
-│   │   └── AIService.java               → Complete RAG pipeline with LangChain4j
-│   └── util/
-│       ├── FileUtils.java               → Multi-format document processing
-│       ├── LoggerUtil.java              → Comprehensive logging system
-│       ├── ValidationUtil.java          → Input validation & sanitization
-│       ├── ErrorHandler.java            → Error management & user dialogs
-│       └── ConfigurationManager.java    → Settings persistence & management
-├── src/main/resources/
-│   ├── fxml/
-│   │   ├── main_view.fxml              → Main application window
-│   │   ├── chat_view.fxml              → Chat interface layout
-│   │   ├── admin_view.fxml             → Document management UI
-│   │   ├── search_view.fxml            → Search interface
-│   │   └── settings_view.fxml          → Configuration panel
-│   └── styles/
-│       ├── application.css             → Comprehensive styling
-│       └── simple.css                  → Lightweight theme
-└── pom.xml                             → Maven configuration with all dependencies
+InsightBase-AI/
+├── README.md
+└── InsightBase AI/                          <- Maven project root (pom.xml lives here)
+    ├── pom.xml
+    └── src/
+        ├── main/
+        │   ├── java/com/example/insightbaseai/
+        │   │   ├── MainApp.java             -> JavaFX Application entry point
+        │   │   ├── Launcher.java            -> IDE-friendly wrapper around MainApp
+        │   │   ├── controller/
+        │   │   │   ├── MainController.java      -> Navigation & main window
+        │   │   │   ├── ChatController.java      -> AI chat interface
+        │   │   │   ├── AdminController.java     -> Document management
+        │   │   │   ├── SearchController.java    -> Search + result export
+        │   │   │   └── SettingsController.java  -> Configuration management
+        │   │   ├── model/
+        │   │   │   ├── ChatMessage.java         -> Chat data structure
+        │   │   │   ├── DocumentEntry.java       -> Document metadata & statistics
+        │   │   │   └── KnowledgeBase.java       -> Document collection + statistics
+        │   │   ├── service/
+        │   │   │   └── AIService.java           -> RAG pipeline (singleton)
+        │   │   └── util/
+        │   │       ├── FileUtils.java           -> Multi-format text extraction
+        │   │       ├── LoggerUtil.java          -> Logging facade
+        │   │       ├── ValidationUtil.java      -> Input validation
+        │   │       ├── ErrorHandler.java        -> Error dialogs & handling
+        │   │       ├── ConfigurationManager.java -> Settings persistence
+        │   │       └── ThemeManager.java        -> Light/Dark/System theming
+        │   └── resources/
+        │       ├── fxml/                        -> main, chat, admin, search, settings views
+        │       ├── styles/                      -> application.css, simple.css
+        │       └── log4j2.xml                   -> Logging configuration
+        └── test/java/com/example/insightbaseai/
+            ├── model/DocumentEntryTest.java
+            └── util/FileUtilsTest.java, ValidationUtilTest.java
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### **Core Technologies**
-- **Language:** Java 21 LTS (Latest Long-Term Support)
+### Core Technologies
+
+- **Language:** Java 21 LTS (`maven-compiler-plugin` targets release 21)
 - **Frontend:** JavaFX 23.0.1 with FXML
 - **AI Framework:** LangChain4j 0.35.0
-- **LLM Providers:** OpenAI (GPT-4o-mini, GPT-4o) & Hugging Face (Llama-3.1, et al.)
-- **Build Tool:** Maven 3.9.11
-- **Vector Storage:** In-memory embedding store with extensible architecture
+- **LLM Providers:** OpenAI (default `gpt-4o-mini`) and Hugging Face (default `meta-llama/Llama-3.1-8B-Instruct`), both reached through an OpenAI-compatible client
+- **Embeddings:** `langchain4j-embeddings-all-minilm-l6-v2-q`, running locally
+- **Vector Storage:** `InMemoryEmbeddingStore`, rebuilt on each launch
+- **Build Tool:** Apache Maven
 
-### **Key Dependencies**
-- **Document Processing:** Apache PDFBox, Apache POI (for PDF & DOCX)
-- **JSON Processing:** Jackson Core & Databind
-- **Utilities:** Apache Commons IO
-- **Logging:** Apache Log4j2
-- **Testing:** JUnit 5, Mockito
-- **UI Styling:** Modern CSS with comprehensive theming  
+### Key Dependencies
+
+- **Document Processing:** Apache PDFBox 3.0.3 (PDF), Apache POI 5.2.5 (DOCX)
+- **JSON Processing:** Jackson Databind 2.17.2
+- **Utilities:** Apache Commons IO 2.16.1
+- **Logging:** Log4j2 2.22.1
+- **Testing:** JUnit 5 (Jupiter 5.10.2)
 
 ---
 
-## 📦 Setup & Installation
+## Setup & Installation
 
-### **Prerequisites**
-- ☑️ **Java 21 LTS** or higher
-- ☑️ **Maven 3.6+** 
-- ☑️ **Internet connection** (for dependencies & API calls)
-- ☑️ **API Key** (OpenAI and/or Hugging Face)
+### Prerequisites
 
-### **Quick Start Guide**
+- **Java 21 LTS** or higher (required)
+- **Apache Maven 3.6+** (required)
+- **Internet connection** - needed to download dependencies, and for chat once configured. Embedding and search work offline
+- **API key** (optional) - an OpenAI and/or Hugging Face key enables real chat responses. Without one the app runs in demo mode
 
-1. **Clone or Download the Project**
+### Quick Start
+
+1. **Clone the project**
+
    ```bash
-   git clone https://github.com/yourusername/insightbaseai.git
+   git clone https://github.com/ecxof/InsightBase-AI.git
    # The Maven project (pom.xml) lives in the "InsightBase AI" sub-folder:
    cd "InsightBase-AI/InsightBase AI"
    ```
 
-2. **Verify Java Version**
+2. **Verify the Java version**
+
    ```bash
    java -version
    # Should show Java 21 or higher
    ```
 
-3. **Build and Test the Application**
+3. **Build and test**
+
    ```bash
    mvn clean test
    ```
 
 4. **Run InsightBase AI**
+
    ```bash
    mvn javafx:run
    ```
-   Alternatively, run it from your IDE using the
-   `com.example.insightbaseai.Launcher` class. `Launcher` is a thin wrapper whose
-   `main()` calls `MainApp.main()`; it exists so the app can be started from an IDE
-   without adding JavaFX module-path VM arguments.
 
-5. **Initial Configuration**
-   - Open the **⚙️ Settings** tab
-   - Choose your preferred provider (**OpenAI** or **Hugging Face**)
+   Alternatively, run it from your IDE using the `com.example.insightbaseai.Launcher`
+   class. `Launcher` is a thin wrapper whose `main()` calls `MainApp.main()`; it exists
+   so the app can be started from an IDE without adding JavaFX module-path VM arguments.
+
+5. **Initial configuration**
+
+   - Open the **Settings** tab
+   - Choose your provider (**OpenAI** or **Hugging Face**)
    - Enter your API key and select a model
-   - Configure preferences and save settings
-   - You're ready to go! 🚀
+   - Adjust RAG parameters if desired, then save
 
-### **Alternative Run Methods**
+### Alternative Run Methods
+
 ```bash
 # Run without clean
 mvn javafx:run
@@ -139,119 +152,121 @@ mvn clean javafx:run
 
 # Build and run separately
 mvn compile && mvn javafx:run
-```  
+```
 
 ---
 
-## 🎯 Application Usage
+## Configuration & Data Location
 
-### **Getting Started Workflow**
+On first launch the application creates a directory in your home folder:
 
-1. **⚙️ Settings Configuration**
-   - Choose AI Provider: **OpenAI** or **Hugging Face**
-   - Configure corresponding API key and model preferences
-   - Adjust RAG parameters (chunk size, retrieval results)
-   - Set application preferences and theme options
+```
+~/.insightbaseai/
+├── config.properties     # Provider, API keys, RAG settings, window state
+├── documents/            # Copies of uploaded documents
+└── logs/                 # Application logs
+```
 
-2. **📋 Document Management (Admin)**
-   - Upload documents (TXT, PDF, DOCX, MD, Java, XML, JSON, YAML)
-   - View document statistics and processing status
-   - Manage knowledge base collections
-
-3. **💬 AI-Powered Chat**
-   - Ask questions about your uploaded documents
-   - Get contextually relevant answers using RAG
-   - View conversation history and manage chat sessions
-
-4. **🔍 Advanced Search**
-   - Search across all documents with filters
-   - Export search results and findings
-   - Navigate to specific document sections
-
-### **Key Features Breakdown**
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| 🚀 **Modern UI** | Professional JavaFX interface with CSS styling | ✅ Complete |
-| 🧠 **AI Integration** | LangChain4j + OpenAI & Hugging Face models | ✅ Complete |
-| 📄 **Document Processing** | Multi-format support with text extraction | ✅ Complete |
-| 🔍 **Intelligent Search** | Full-text search with advanced filtering | ✅ Complete |
-| ⚙️ **Configuration** | Persistent settings with validation | ✅ Complete |
-| 🛡️ **Error Handling** | Comprehensive error management | ✅ Complete |
-| 📊 **Analytics** | Performance tracking and statistics | ✅ Complete |
-| 🎨 **Professional Design** | Modern, responsive UI components | ✅ Complete |
+**API keys are stored in plain text** in `config.properties`. Treat that file as a
+secret, and do not commit it. The repository's `.gitignore` already excludes
+`config.properties` and `.insightbaseai/`.
 
 ---
 
-## 🏗️ Architecture Highlights
+## Application Usage
 
-### **Design Patterns**
-- **MVC (Model-View-Controller)** — Clean separation of concerns
-- **Singleton Pattern** — Configuration and error management
-- **Observer Pattern** — UI updates and event handling
-- **Strategy Pattern** — Document processing for different formats
+### Getting Started
 
-### **Key Technical Decisions**
-- **JavaFX 23** — Modern, native desktop application framework
-- **LangChain4j** — Robust AI integration with multi-provider RAG support
-- **In-memory Vector Store** — Fast retrieval with extensible architecture
-- **Maven Build System** — Reliable dependency management
-- **Comprehensive Error Handling** — User-friendly experience
-- **Persistent Configuration** — Seamless user experience across sessions
+1. **Settings** - Choose provider, enter the API key, pick a model, and tune RAG parameters (chunk size, overlap, retrieval count, similarity threshold)
+2. **Admin** - Upload documents; view processing status and knowledge base statistics
+3. **Chat** - Ask questions about your documents and get answers grounded in retrieved excerpts
+4. **Search** - Search across documents with filters, and export results to a file
 
----
+### How Retrieval Works
 
-## � Future Enhancements
-
-### **Planned Improvements**
-- 🌐 **External Vector Databases** — Integration with FAISS, Chroma, or Pinecone
-- 🎨 **Theme System** — Custom theme support beyond dark/light
-- 🔌 **Plugin Architecture** — Extensible system for custom document processors
-- 🌍 **Multi-language Support** — Internationalization (i18n) capabilities
-
-### **Technical Roadmap**
-- **Enhanced RAG Pipeline** — Query transformation and result re-ranking
-- **Distributed Processing** — Support for large document collections
-- **API Integration** — REST API for external system integration
-- **Cloud Deployment** — Docker containerization and cloud-native features
+1. An uploaded document is split with a recursive splitter using the configured chunk size and overlap
+2. Each chunk is embedded locally and stored in the in-memory vector store
+3. A question is embedded, then matched against the store using the configured maximum results and minimum similarity score
+4. Matching excerpts are prepended to the prompt with an instruction to answer only from that context, and to say so when the answer is not present
+5. If nothing clears the threshold, the question is sent without context rather than failing
 
 ---
 
-## 📊 Project Status: **100% Complete** ✅
+## Architecture Highlights
 
-**All core requirements successfully implemented:**
-- ✅ Java 21 LTS upgrade and optimization
-- ✅ Complete MVC architecture implementation
-- ✅ Professional JavaFX desktop application
-- ✅ AI integration with RAG capabilities
-- ✅ Comprehensive document management system
-- ✅ Advanced search and filtering functionality
-- ✅ Modern, professional UI design
-- ✅ Robust error handling and validation
-- ✅ Persistent configuration management
-- ✅ Complete navigation and user experience
+### Design Patterns
 
----
+- **MVC** - Clean separation between FXML views, controllers, and the model layer
+- **Singleton** - `AIService`, `ConfigurationManager`, `ErrorHandler`, `LoggerUtil`, `ThemeManager`
+- **Observer** - JavaFX property listeners drive window-state persistence and theming
+- **Strategy** - Per-extension text extraction in `FileUtils`
 
-## 👥 Development Team
+### Key Technical Decisions
 
-**Project:** InsightBase AI - Intelligent Knowledge Management System  
-**Course:** Advanced Programming (ITS66704)  
-**Institution:** Taylor's University  
-**Year:** 2024/2025  
-
-**Technologies Mastered:**
-- Java 21 LTS Development
-- JavaFX Desktop Application Development
-- AI/ML Integration with LangChain4j
-- RAG (Retrieval-Augmented Generation) Implementation
-- Professional UI/UX Design
-- Maven Build System Management
-- Comprehensive Error Handling
-- Software Architecture & Design Patterns
+- **JavaFX 23** - Modern, native desktop application framework
+- **LangChain4j** - Multi-provider AI integration with RAG support
+- **Local embedding model** - Indexing works offline and costs nothing per document
+- **In-memory vector store** - Fast retrieval, at the cost of being rebuilt each launch
+- **Maven** - Reliable dependency management
 
 ---
 
-**🎉 Ready for Production Use!**
+## Known Limitations
 
-*InsightBase AI represents a complete, professional-grade application demonstrating advanced Java programming, modern UI development, AI integration, and software engineering best practices.*  
+- **The vector store is not persistent.** `InMemoryEmbeddingStore` is rebuilt on every launch, so documents must be re-indexed each session
+- **Removing a document does not remove its vectors.** `InMemoryEmbeddingStore` has no delete-by-id, so a removed document's chunks can still be retrieved until restart. An external vector database would resolve this
+- **API keys are stored in plain text** in `~/.insightbaseai/config.properties`
+- **Test coverage is partial.** Unit tests cover the model and utility layers; the controllers and `AIService` are not covered
+
+---
+
+## Future Enhancements
+
+### Planned Improvements
+
+- **External Vector Databases** - Integration with FAISS, Chroma, or Qdrant for persistence and deletion
+- **Theme System** - Custom themes beyond Light/Dark/System
+- **Plugin Architecture** - Extensible system for custom document processors
+- **Multi-language Support** - Internationalization (i18n)
+
+### Technical Roadmap
+
+- **Enhanced RAG Pipeline** - Query transformation and result re-ranking
+- **Distributed Processing** - Support for large document collections
+- **API Integration** - REST API for external systems
+- **Cloud Deployment** - Docker containerization
+
+---
+
+## Project Status
+
+All core coursework requirements are implemented and working:
+
+- Java 21 LTS build
+- MVC architecture across five views and controllers
+- RAG pipeline with local embeddings and configurable retrieval
+- Document management for nine file formats
+- Search with filtering and export
+- Light/Dark/System theming
+- Error handling and input validation
+- Persistent configuration and window state
+
+See [Known Limitations](#known-limitations) for what is not production-ready.
+
+---
+
+## Development Team
+
+**Project:** InsightBase AI - Intelligent Knowledge Management System
+**Course:** Advanced Programming (ITS66704)
+**Institution:** Taylor's University
+**Academic Year:** 2025/2026
+
+**Technologies used:**
+
+- Java 21 LTS
+- JavaFX desktop application development
+- AI integration with LangChain4j
+- Retrieval-Augmented Generation (RAG)
+- Maven build system
+- Software architecture and design patterns
