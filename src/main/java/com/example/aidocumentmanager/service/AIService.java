@@ -47,6 +47,11 @@ public class AIService {
     private EmbeddingStore<TextSegment> embeddingStore;
     private DocumentSplitter documentSplitter;
 
+    // Embedding store ids per document, so a deleted document's chunks can be
+    // dropped from the vector store too - the store deletes by embedding id and
+    // knows nothing about our documents.
+    private final Map<String, List<String>> documentEmbeddingIds;
+
     // Statistics and monitoring
     private final Map<String, Object> statistics;
     private final List<ChatMessage> chatHistory;
@@ -54,6 +59,7 @@ public class AIService {
     private AIService() {
         this.statistics = new ConcurrentHashMap<>();
         this.chatHistory = new ArrayList<>();
+        this.documentEmbeddingIds = new ConcurrentHashMap<>();
         this.knowledgeBase = new KnowledgeBase("Default Knowledge Base", "Default knowledge base for AI Document Manager");
 
         initializeEmbedding();
@@ -394,7 +400,8 @@ public class AIService {
             logger.info("Embedding " + segments.size() + " chunks for: " + docEntry.getFileName());
 
             List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-            embeddingStore.addAll(embeddings, segments);
+            List<String> embeddingIds = embeddingStore.addAll(embeddings, segments);
+            documentEmbeddingIds.put(docEntry.getId(), new ArrayList<>(embeddingIds));
 
             logger.info("Successfully embedded " + segments.size() + " chunks for: " + docEntry.getFileName());
             return segments.size();
@@ -407,12 +414,54 @@ public class AIService {
 
     public void removeDocument(String documentId) {
         DocumentEntry document = knowledgeBase.getDocument(documentId);
-        if (document != null) {
-            knowledgeBase.removeDocument(documentId);
-            // NOTE: InMemoryEmbeddingStore doesn't support deletion by document ID.
-            // In production, consider a persistent vector DB (e.g. Chroma, Qdrant).
-            logger.logDocumentProcessing(document.getFileName(), "Removed from knowledge base");
-            statistics.put("totalDocuments", Math.max(0, (Integer) statistics.get("totalDocuments") - 1));
+        if (document == null) {
+            return;
+        }
+
+        knowledgeBase.removeDocument(documentId);
+        int removedChunks = removeEmbeddings(embeddingStore, documentEmbeddingIds, document);
+
+        logger.logDocumentProcessing(document.getFileName(),
+                "Removed from knowledge base (" + removedChunks + " chunks dropped from the vector store)");
+
+        statistics.put("totalDocuments", Math.max(0, (Integer) statistics.get("totalDocuments") - 1));
+        // Mirror addDocument, which counts the document's own chunk count - that
+        // is a paragraph estimate rather than an embedding count when embedding
+        // was unavailable, and the two must cancel out.
+        statistics.put("totalChunks",
+                Math.max(0, (Integer) statistics.get("totalChunks") - document.getChunkCount()));
+    }
+
+    /**
+     * Drop a document's chunks from the vector store. Without this the chunks
+     * stay searchable after the document is deleted, so the assistant keeps
+     * answering from a document the user removed.
+     *
+     * @return number of chunks removed
+     */
+    static int removeEmbeddings(EmbeddingStore<TextSegment> store, Map<String, List<String>> embeddingIdsByDocument,
+            DocumentEntry document) {
+
+        List<String> embeddingIds = embeddingIdsByDocument.remove(document.getId());
+
+        if (embeddingIds == null || embeddingIds.isEmpty()) {
+            // Never embedded - the model failed to load, or embedding threw and
+            // the document was indexed by paragraph count only.
+            return 0;
+        }
+
+        if (store == null) {
+            return 0;
+        }
+
+        try {
+            store.removeAll(embeddingIds);
+            return embeddingIds.size();
+        } catch (Exception e) {
+            logger.error("Failed to remove embeddings for: " + document.getFileName(), e);
+            // Put them back so a later delete, or a store swap, can retry.
+            embeddingIdsByDocument.put(document.getId(), embeddingIds);
+            return 0;
         }
     }
 
