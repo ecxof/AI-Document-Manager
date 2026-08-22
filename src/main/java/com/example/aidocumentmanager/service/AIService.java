@@ -255,20 +255,15 @@ public class AIService {
 
             ConfigurationManager config = ConfigurationManager.getInstance();
             int maxResults = Math.max(1, config.getMaxRetrievalResults());
-            double minScore = config.getSimilarityThreshold();
+            double minScore = Math.max(0.0, Math.min(1.0, config.getSimilarityThreshold()));
 
             Embedding queryEmbedding = embeddingModel.embed(userQuestion).content();
-            EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
-                    .queryEmbedding(queryEmbedding)
-                    .maxResults(maxResults)
-                    .minScore(minScore)
-                    .build();
 
-            EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
-            List<EmbeddingMatch<TextSegment>> matches = searchResult.matches();
+            List<EmbeddingMatch<TextSegment>> matches = retrieveWithFallback(embeddingStore, queryEmbedding,
+                    maxResults, minScore);
 
             if (matches.isEmpty()) {
-                logger.info("No relevant context found in knowledge base. Answering without RAG context.");
+                logger.info("Knowledge base returned no chunks at all. Answering without RAG context.");
                 return userQuestion;
             }
 
@@ -281,7 +276,8 @@ public class AIService {
                         .append(match.embedded().text()).append("\n\n");
             }
 
-            logger.info("Injecting " + matches.size() + " context chunks into prompt.");
+            logger.info("Injecting " + matches.size() + " context chunks into prompt (top score: "
+                    + String.format("%.3f", matches.get(0).score()) + ").");
 
             return "You are an AI assistant. Use the following context from the user's documents to answer the question accurately and concisely. "
                     + "If the answer is not found in the context, say so clearly.\n\n"
@@ -292,6 +288,51 @@ public class AIService {
             logger.error("RAG retrieval failed, falling back to no-context response.", e);
             return userQuestion;
         }
+    }
+
+    /**
+     * Search the store for the chunks closest to the query, retrying without the
+     * similarity threshold when it filters out everything.
+     *
+     * <p>
+     * Note on {@code minScore}: langchain4j does not compare against raw cosine
+     * similarity. It rescales with {@code (cosineSimilarity + 1) / 2}, so 0.5
+     * means "cosine 0.0" and 0.7 means "cosine 0.4". On-topic questions score
+     * around 0.70-0.83 against real prose, so a 0.7 threshold sits right on the
+     * cliff: rephrase the question and every chunk of a correctly indexed
+     * document drops out, leaving the model to answer with no context at all.
+     *
+     * <p>
+     * Falling back to the closest chunks is the safer failure mode. The prompt
+     * tells the model to say when the answer is not in the context, so an
+     * off-topic excerpt costs little, while dropping the context guarantees an
+     * "I don't have that information" answer about a document we did index.
+     */
+    static List<EmbeddingMatch<TextSegment>> retrieveWithFallback(EmbeddingStore<TextSegment> store,
+            Embedding queryEmbedding, int maxResults, double minScore) {
+
+        List<EmbeddingMatch<TextSegment>> matches = search(store, queryEmbedding, maxResults, minScore);
+
+        if (matches.isEmpty() && minScore > 0.0) {
+            logger.info("No chunks scored at or above the similarity threshold (" + minScore
+                    + "). Falling back to the closest " + maxResults + " chunks.");
+            matches = search(store, queryEmbedding, maxResults, 0.0);
+        }
+
+        return matches;
+    }
+
+    private static List<EmbeddingMatch<TextSegment>> search(EmbeddingStore<TextSegment> store,
+            Embedding queryEmbedding, int maxResults, double minScore) {
+
+        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedding)
+                .maxResults(maxResults)
+                .minScore(minScore)
+                .build();
+
+        EmbeddingSearchResult<TextSegment> searchResult = store.search(searchRequest);
+        return searchResult.matches();
     }
 
     // =========================================================================
