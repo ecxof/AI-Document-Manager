@@ -132,6 +132,14 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
+        <configuration>
+          <systemPropertyVariables>
+            <!-- Keep tests that exercise ConfigurationManager and the persisted
+                 document index inside the build directory, rather than writing
+                 into the developer's real home directory. -->
+            <user.home>${project.build.directory}/test-home</user.home>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.openjfx</groupId>

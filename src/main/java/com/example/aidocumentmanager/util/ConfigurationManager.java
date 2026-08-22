@@ -17,6 +17,7 @@ public class ConfigurationManager {
     private static final String CONFIG_FILE = "config.properties";
     private static final String DOCUMENTS_DIR = "documents";
     private static final String LOGS_DIR = "logs";
+    private static final String INDEX_DIR = "index";
 
     /** Bumped whenever an existing config file needs rewriting; see migrateConfiguration(). */
     private static final String CURRENT_SCHEMA_VERSION = "1";
@@ -28,6 +29,7 @@ public class ConfigurationManager {
     private final Path configPath;
     private final Path documentsPath;
     private final Path logsPath;
+    private final Path indexPath;
     private final LoggerUtil logger = LoggerUtil.getInstance();
 
     private ConfigurationManager() throws IOException {
@@ -40,11 +42,13 @@ public class ConfigurationManager {
         this.configPath = appDir.resolve(CONFIG_FILE);
         this.documentsPath = appDir.resolve(DOCUMENTS_DIR);
         this.logsPath = appDir.resolve(LOGS_DIR);
+        this.indexPath = appDir.resolve(INDEX_DIR);
 
         // Create directories if they don't exist
         Files.createDirectories(appDir);
         Files.createDirectories(documentsPath);
         Files.createDirectories(logsPath);
+        Files.createDirectories(indexPath);
 
         // Load existing configuration
         loadConfiguration();
@@ -354,6 +358,10 @@ public class ConfigurationManager {
 
     public Path getLogsPath() {
         return logsPath;
+    }
+
+    public Path getIndexPath() {
+        return indexPath;
     }
 
     public Path getConfigPath() {

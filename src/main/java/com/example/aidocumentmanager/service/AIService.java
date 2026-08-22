@@ -44,8 +44,11 @@ public class AIService {
 
     // RAG components
     private EmbeddingModel embeddingModel;
-    private EmbeddingStore<TextSegment> embeddingStore;
+    // Concrete type: persisting the index needs the store to serialize itself.
+    private InMemoryEmbeddingStore<TextSegment> embeddingStore;
     private DocumentSplitter documentSplitter;
+    private DocumentIndexStore indexStore;
+    private int embeddingDimension;
 
     // Embedding store ids per document, so a deleted document's chunks can be
     // dropped from the vector store too - the store deletes by embedding id and
@@ -65,6 +68,10 @@ public class AIService {
         initializeEmbedding();
         initializeModels();
         initializeStatistics();
+
+        // After initializeStatistics, which would otherwise reset the counts of
+        // whatever was reloaded from the previous session.
+        restoreIndex();
 
         logger.logAIService("Initialized", "AIService initialized successfully with RAG support");
     }
@@ -86,12 +93,57 @@ public class AIService {
             this.embeddingModel = new AllMiniLmL6V2QuantizedEmbeddingModel();
             this.embeddingStore = new InMemoryEmbeddingStore<>();
             this.documentSplitter = createDocumentSplitter();
+            this.indexStore = new DocumentIndexStore(ConfigurationManager.getInstance().getIndexPath());
+            // Probed once here rather than per save: it is a property of the
+            // model, and stamping it into the index keeps vectors from a
+            // different model from ever being searched against.
+            this.embeddingDimension = embeddingModel.embed("dimension probe").content().dimension();
             logger.info("Embedding model initialized successfully.");
         } catch (Exception e) {
             logger.error("Failed to initialize embedding model — RAG will be disabled.", e);
             this.embeddingModel = null;
             this.embeddingStore = null;
+            this.indexStore = null;
         }
+    }
+
+    /**
+     * Reload the documents and embeddings written by the previous session, so an
+     * uploaded document does not have to be uploaded again after a restart.
+     */
+    private void restoreIndex() {
+        if (indexStore == null || embeddingModel == null) {
+            return;
+        }
+
+        DocumentIndexStore.Snapshot snapshot = indexStore.load(embeddingDimension);
+        if (snapshot.isEmpty()) {
+            return;
+        }
+
+        this.embeddingStore = snapshot.embeddingStore();
+        documentEmbeddingIds.putAll(snapshot.embeddingIds());
+
+        int totalChunks = 0;
+        for (DocumentEntry document : snapshot.documents()) {
+            knowledgeBase.addDocument(document);
+            totalChunks += document.getChunkCount();
+        }
+
+        statistics.put("totalDocuments", snapshot.documents().size());
+        statistics.put("totalChunks", totalChunks);
+
+        logger.logAIService("Index Restored",
+                snapshot.documents().size() + " documents (" + totalChunks + " chunks) reloaded from disk");
+    }
+
+    /** Write the current documents and embeddings to disk. */
+    private void persistIndex() {
+        if (indexStore == null || embeddingStore == null || embeddingModel == null) {
+            return;
+        }
+
+        indexStore.save(knowledgeBase.getAllDocuments(), documentEmbeddingIds, embeddingStore, embeddingDimension);
     }
 
     /**
@@ -373,6 +425,8 @@ public class AIService {
             statistics.put("totalDocuments", (Integer) statistics.get("totalDocuments") + 1);
             statistics.put("totalChunks", (Integer) statistics.get("totalChunks") + chunkCount);
 
+            persistIndex();
+
             logger.logDocumentProcessing(document.getFileName(), "Added and indexed (" + chunkCount + " chunks)");
             logger.logPerformance("Document Indexing + Embedding", System.currentTimeMillis() - startTime);
 
@@ -430,6 +484,8 @@ public class AIService {
         // was unavailable, and the two must cancel out.
         statistics.put("totalChunks",
                 Math.max(0, (Integer) statistics.get("totalChunks") - document.getChunkCount()));
+
+        persistIndex();
     }
 
     /**
