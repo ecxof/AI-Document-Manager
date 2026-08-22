@@ -120,7 +120,11 @@ public class DocumentIndexStore {
             Map<String, List<String>> embeddingIds = new LinkedHashMap<>();
             file.embeddingIds.forEach((documentId, ids) -> embeddingIds.put(documentId, new ArrayList<>(ids)));
 
-            logger.info("Restored " + documents.size() + " documents from the persisted index.");
+            if (documents.isEmpty()) {
+                logger.info("Persisted index at " + indexFile + " holds no documents.");
+            } else {
+                logger.info("Restored " + documents.size() + " documents from the persisted index.");
+            }
             return new Snapshot(documents, embeddingIds, store);
 
         } catch (Exception e) {

@@ -44,6 +44,20 @@
     -fx-background-color: #E9ECEF;
 }
 
+/* Modena draws a blue focus ring inside the selected tab. The selected tab is
+   already obvious from its background, so the ring is just noise. */
+.tab-pane > .tab-header-area > .headers-region > .tab:focused > .focus-indicator {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-border-insets: 0;
+}
+
+/* Explanatory text under a control. */
+.hint-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6C757D;
+}
+
 /* Button Styling */
 .button {
     -fx-background-color: #3498DB;
@@ -411,6 +425,10 @@
 
 .dark-mode .tab-pane .tab:hover {
     -fx-background-color: #35354F;
+}
+
+.dark-mode .hint-label {
+    -fx-text-fill: #8888A8;
 }
 
 /* Tab content area */

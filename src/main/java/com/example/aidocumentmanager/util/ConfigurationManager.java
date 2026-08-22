@@ -128,7 +128,7 @@ public class ConfigurationManager {
         setDefaultProperty("ai.provider", "openai");
 
         // Application Settings
-        setDefaultProperty("app.theme", "light");
+        setDefaultProperty("app.theme", "System Default");
         setDefaultProperty("app.max.chat.history", "10");
         setDefaultProperty("app.enable.logging", "true");
         setDefaultProperty("app.auto.save", "true");

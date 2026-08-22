@@ -99,7 +99,7 @@
                   <!-- Application Settings Section -->
                   <VBox spacing="10.0" styleClass="section-container">
                      <children>
-                        <Label styleClass="subtitle-label" text="⚙️ Application Settings" />
+                        <Label styleClass="subtitle-label" text="⚙ Application Settings" />
                         <Separator />
 
                         <GridPane hgap="10.0" vgap="15.0">
@@ -117,7 +117,7 @@
                               GridPane.rowIndex="0" />
 
                            <Label text="Theme:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                           <ComboBox fx:id="themeCombo" prefWidth="150.0" GridPane.columnIndex="1"
+                           <ComboBox fx:id="themeCombo" prefWidth="200.0" GridPane.columnIndex="1"
                               GridPane.rowIndex="1" />
 
                            <Label text="Enable Logging:" GridPane.columnIndex="0"
@@ -165,6 +165,18 @@
                               GridPane.rowIndex="2" />
                            <Label fx:id="maxRetrievalResultsLabel" text="3 results"
                               GridPane.columnIndex="2" GridPane.rowIndex="2" />
+
+                           <Label text="Similarity Threshold:" GridPane.columnIndex="0"
+                              GridPane.rowIndex="3" />
+                           <Slider fx:id="similarityThresholdSlider" GridPane.columnIndex="1"
+                              GridPane.rowIndex="3" />
+                           <Label fx:id="similarityThresholdLabel" text="0.50"
+                              GridPane.columnIndex="2" GridPane.rowIndex="3" />
+
+                           <Label fx:id="similarityThresholdHint" wrapText="true"
+                              styleClass="hint-label" GridPane.columnIndex="1"
+                              GridPane.columnSpan="2" GridPane.rowIndex="4"
+                              text="Minimum relevance a chunk needs to be used as context. Lower retrieves more." />
                         </GridPane>
                      </children>
                   </VBox>

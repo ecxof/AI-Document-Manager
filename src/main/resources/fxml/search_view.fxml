@@ -43,7 +43,7 @@
                   </HBox>
 
                   <!-- Advanced Filters (collapsible) -->
-                  <TitledPane fx:id="advancedFilterPane" text="⚙️ Advanced Filters" expanded="false">
+                  <TitledPane fx:id="advancedFilterPane" text="⚙ Advanced Filters" expanded="false">
                      <content>
                         <VBox spacing="10.0">
                            <children>
