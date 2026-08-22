@@ -17,11 +17,19 @@ public class ConfigurationManager {
     private static final String CONFIG_FILE = "config.properties";
     private static final String DOCUMENTS_DIR = "documents";
     private static final String LOGS_DIR = "logs";
+    private static final String INDEX_DIR = "index";
+
+    /** Bumped whenever an existing config file needs rewriting; see migrateConfiguration(). */
+    private static final String CURRENT_SCHEMA_VERSION = "1";
+    private static final String SCHEMA_VERSION_KEY = "config.schema.version";
+    private static final String SIMILARITY_THRESHOLD_KEY = "rag.similarity.threshold";
+    private static final String DEFAULT_SIMILARITY_THRESHOLD = "0.5";
 
     private final Properties properties;
     private final Path configPath;
     private final Path documentsPath;
     private final Path logsPath;
+    private final Path indexPath;
     private final LoggerUtil logger = LoggerUtil.getInstance();
 
     private ConfigurationManager() throws IOException {
@@ -34,14 +42,19 @@ public class ConfigurationManager {
         this.configPath = appDir.resolve(CONFIG_FILE);
         this.documentsPath = appDir.resolve(DOCUMENTS_DIR);
         this.logsPath = appDir.resolve(LOGS_DIR);
+        this.indexPath = appDir.resolve(INDEX_DIR);
 
         // Create directories if they don't exist
         Files.createDirectories(appDir);
         Files.createDirectories(documentsPath);
         Files.createDirectories(logsPath);
+        Files.createDirectories(indexPath);
 
         // Load existing configuration
         loadConfiguration();
+
+        // Bring older config files up to date before defaults are applied
+        migrateConfiguration();
 
         // Set default values if not present
         setDefaultConfiguration();
@@ -115,7 +128,7 @@ public class ConfigurationManager {
         setDefaultProperty("ai.provider", "openai");
 
         // Application Settings
-        setDefaultProperty("app.theme", "light");
+        setDefaultProperty("app.theme", "System Default");
         setDefaultProperty("app.max.chat.history", "10");
         setDefaultProperty("app.enable.logging", "true");
         setDefaultProperty("app.auto.save", "true");
@@ -125,7 +138,8 @@ public class ConfigurationManager {
         setDefaultProperty("rag.chunk.size", "500");
         setDefaultProperty("rag.chunk.overlap", "100");
         setDefaultProperty("rag.max.retrieval.results", "3");
-        setDefaultProperty("rag.similarity.threshold", "0.7");
+        setDefaultProperty(SIMILARITY_THRESHOLD_KEY, DEFAULT_SIMILARITY_THRESHOLD);
+        setDefaultProperty(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION);
 
         // File Processing Settings
         setDefaultProperty("file.max.size.mb", "50");
@@ -139,6 +153,30 @@ public class ConfigurationManager {
         // Performance Settings
         setDefaultProperty("performance.thread.pool.size", "4");
         setDefaultProperty("performance.cache.size", "100");
+    }
+
+    /**
+     * Rewrite settings that a previous version of the app persisted with a value
+     * we now know to be wrong. Only untouched-looking values are replaced, so a
+     * deliberate user setting is never overwritten.
+     */
+    private void migrateConfiguration() {
+        String version = properties.getProperty(SCHEMA_VERSION_KEY);
+
+        if (version == null) {
+            // v0 -> v1: the similarity threshold shipped as 0.7, but langchain4j
+            // does not compare it against raw cosine similarity - it rescales with
+            // (cosineSimilarity + 1) / 2. So 0.7 demanded a cosine of 0.4, which
+            // short questions rarely reach against prose chunks, and every chunk
+            // of a correctly indexed document got filtered out of retrieval.
+            if ("0.7".equals(properties.getProperty(SIMILARITY_THRESHOLD_KEY))) {
+                properties.setProperty(SIMILARITY_THRESHOLD_KEY, DEFAULT_SIMILARITY_THRESHOLD);
+                logger.info("Migrated " + SIMILARITY_THRESHOLD_KEY + " from 0.7 to "
+                        + DEFAULT_SIMILARITY_THRESHOLD + " so document retrieval returns matches again.");
+            }
+        }
+
+        properties.setProperty(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION);
     }
 
     /**
@@ -273,11 +311,11 @@ public class ConfigurationManager {
     }
 
     public double getSimilarityThreshold() {
-        return getDoubleProperty("rag.similarity.threshold", 0.7);
+        return getDoubleProperty(SIMILARITY_THRESHOLD_KEY, Double.parseDouble(DEFAULT_SIMILARITY_THRESHOLD));
     }
 
     public void setSimilarityThreshold(double threshold) {
-        setProperty("rag.similarity.threshold", String.valueOf(threshold));
+        setProperty(SIMILARITY_THRESHOLD_KEY, String.valueOf(threshold));
     }
 
     public int getMaxFileSizeMB() {
@@ -320,6 +358,10 @@ public class ConfigurationManager {
 
     public Path getLogsPath() {
         return logsPath;
+    }
+
+    public Path getIndexPath() {
+        return indexPath;
     }
 
     public Path getConfigPath() {

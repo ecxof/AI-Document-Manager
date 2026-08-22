@@ -44,8 +44,16 @@ public class AIService {
 
     // RAG components
     private EmbeddingModel embeddingModel;
-    private EmbeddingStore<TextSegment> embeddingStore;
+    // Concrete type: persisting the index needs the store to serialize itself.
+    private InMemoryEmbeddingStore<TextSegment> embeddingStore;
     private DocumentSplitter documentSplitter;
+    private DocumentIndexStore indexStore;
+    private int embeddingDimension;
+
+    // Embedding store ids per document, so a deleted document's chunks can be
+    // dropped from the vector store too - the store deletes by embedding id and
+    // knows nothing about our documents.
+    private final Map<String, List<String>> documentEmbeddingIds;
 
     // Statistics and monitoring
     private final Map<String, Object> statistics;
@@ -54,11 +62,16 @@ public class AIService {
     private AIService() {
         this.statistics = new ConcurrentHashMap<>();
         this.chatHistory = new ArrayList<>();
+        this.documentEmbeddingIds = new ConcurrentHashMap<>();
         this.knowledgeBase = new KnowledgeBase("Default Knowledge Base", "Default knowledge base for AI Document Manager");
 
         initializeEmbedding();
         initializeModels();
         initializeStatistics();
+
+        // After initializeStatistics, which would otherwise reset the counts of
+        // whatever was reloaded from the previous session.
+        restoreIndex();
 
         logger.logAIService("Initialized", "AIService initialized successfully with RAG support");
     }
@@ -80,12 +93,57 @@ public class AIService {
             this.embeddingModel = new AllMiniLmL6V2QuantizedEmbeddingModel();
             this.embeddingStore = new InMemoryEmbeddingStore<>();
             this.documentSplitter = createDocumentSplitter();
+            this.indexStore = new DocumentIndexStore(ConfigurationManager.getInstance().getIndexPath());
+            // Probed once here rather than per save: it is a property of the
+            // model, and stamping it into the index keeps vectors from a
+            // different model from ever being searched against.
+            this.embeddingDimension = embeddingModel.embed("dimension probe").content().dimension();
             logger.info("Embedding model initialized successfully.");
         } catch (Exception e) {
             logger.error("Failed to initialize embedding model — RAG will be disabled.", e);
             this.embeddingModel = null;
             this.embeddingStore = null;
+            this.indexStore = null;
         }
+    }
+
+    /**
+     * Reload the documents and embeddings written by the previous session, so an
+     * uploaded document does not have to be uploaded again after a restart.
+     */
+    private void restoreIndex() {
+        if (indexStore == null || embeddingModel == null) {
+            return;
+        }
+
+        DocumentIndexStore.Snapshot snapshot = indexStore.load(embeddingDimension);
+        if (snapshot.isEmpty()) {
+            return;
+        }
+
+        this.embeddingStore = snapshot.embeddingStore();
+        documentEmbeddingIds.putAll(snapshot.embeddingIds());
+
+        int totalChunks = 0;
+        for (DocumentEntry document : snapshot.documents()) {
+            knowledgeBase.addDocument(document);
+            totalChunks += document.getChunkCount();
+        }
+
+        statistics.put("totalDocuments", snapshot.documents().size());
+        statistics.put("totalChunks", totalChunks);
+
+        logger.logAIService("Index Restored",
+                snapshot.documents().size() + " documents (" + totalChunks + " chunks) reloaded from disk");
+    }
+
+    /** Write the current documents and embeddings to disk. */
+    private void persistIndex() {
+        if (indexStore == null || embeddingStore == null || embeddingModel == null) {
+            return;
+        }
+
+        indexStore.save(knowledgeBase.getAllDocuments(), documentEmbeddingIds, embeddingStore, embeddingDimension);
     }
 
     /**
@@ -255,20 +313,15 @@ public class AIService {
 
             ConfigurationManager config = ConfigurationManager.getInstance();
             int maxResults = Math.max(1, config.getMaxRetrievalResults());
-            double minScore = config.getSimilarityThreshold();
+            double minScore = Math.max(0.0, Math.min(1.0, config.getSimilarityThreshold()));
 
             Embedding queryEmbedding = embeddingModel.embed(userQuestion).content();
-            EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
-                    .queryEmbedding(queryEmbedding)
-                    .maxResults(maxResults)
-                    .minScore(minScore)
-                    .build();
 
-            EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
-            List<EmbeddingMatch<TextSegment>> matches = searchResult.matches();
+            List<EmbeddingMatch<TextSegment>> matches = retrieveWithFallback(embeddingStore, queryEmbedding,
+                    maxResults, minScore);
 
             if (matches.isEmpty()) {
-                logger.info("No relevant context found in knowledge base. Answering without RAG context.");
+                logger.info("Knowledge base returned no chunks at all. Answering without RAG context.");
                 return userQuestion;
             }
 
@@ -281,7 +334,8 @@ public class AIService {
                         .append(match.embedded().text()).append("\n\n");
             }
 
-            logger.info("Injecting " + matches.size() + " context chunks into prompt.");
+            logger.info("Injecting " + matches.size() + " context chunks into prompt (top score: "
+                    + String.format("%.3f", matches.get(0).score()) + ").");
 
             return "You are an AI assistant. Use the following context from the user's documents to answer the question accurately and concisely. "
                     + "If the answer is not found in the context, say so clearly.\n\n"
@@ -292,6 +346,51 @@ public class AIService {
             logger.error("RAG retrieval failed, falling back to no-context response.", e);
             return userQuestion;
         }
+    }
+
+    /**
+     * Search the store for the chunks closest to the query, retrying without the
+     * similarity threshold when it filters out everything.
+     *
+     * <p>
+     * Note on {@code minScore}: langchain4j does not compare against raw cosine
+     * similarity. It rescales with {@code (cosineSimilarity + 1) / 2}, so 0.5
+     * means "cosine 0.0" and 0.7 means "cosine 0.4". On-topic questions score
+     * around 0.70-0.83 against real prose, so a 0.7 threshold sits right on the
+     * cliff: rephrase the question and every chunk of a correctly indexed
+     * document drops out, leaving the model to answer with no context at all.
+     *
+     * <p>
+     * Falling back to the closest chunks is the safer failure mode. The prompt
+     * tells the model to say when the answer is not in the context, so an
+     * off-topic excerpt costs little, while dropping the context guarantees an
+     * "I don't have that information" answer about a document we did index.
+     */
+    static List<EmbeddingMatch<TextSegment>> retrieveWithFallback(EmbeddingStore<TextSegment> store,
+            Embedding queryEmbedding, int maxResults, double minScore) {
+
+        List<EmbeddingMatch<TextSegment>> matches = search(store, queryEmbedding, maxResults, minScore);
+
+        if (matches.isEmpty() && minScore > 0.0) {
+            logger.info("No chunks scored at or above the similarity threshold (" + minScore
+                    + "). Falling back to the closest " + maxResults + " chunks.");
+            matches = search(store, queryEmbedding, maxResults, 0.0);
+        }
+
+        return matches;
+    }
+
+    private static List<EmbeddingMatch<TextSegment>> search(EmbeddingStore<TextSegment> store,
+            Embedding queryEmbedding, int maxResults, double minScore) {
+
+        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedding)
+                .maxResults(maxResults)
+                .minScore(minScore)
+                .build();
+
+        EmbeddingSearchResult<TextSegment> searchResult = store.search(searchRequest);
+        return searchResult.matches();
     }
 
     // =========================================================================
@@ -326,6 +425,8 @@ public class AIService {
             statistics.put("totalDocuments", (Integer) statistics.get("totalDocuments") + 1);
             statistics.put("totalChunks", (Integer) statistics.get("totalChunks") + chunkCount);
 
+            persistIndex();
+
             logger.logDocumentProcessing(document.getFileName(), "Added and indexed (" + chunkCount + " chunks)");
             logger.logPerformance("Document Indexing + Embedding", System.currentTimeMillis() - startTime);
 
@@ -353,7 +454,8 @@ public class AIService {
             logger.info("Embedding " + segments.size() + " chunks for: " + docEntry.getFileName());
 
             List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-            embeddingStore.addAll(embeddings, segments);
+            List<String> embeddingIds = embeddingStore.addAll(embeddings, segments);
+            documentEmbeddingIds.put(docEntry.getId(), new ArrayList<>(embeddingIds));
 
             logger.info("Successfully embedded " + segments.size() + " chunks for: " + docEntry.getFileName());
             return segments.size();
@@ -366,12 +468,56 @@ public class AIService {
 
     public void removeDocument(String documentId) {
         DocumentEntry document = knowledgeBase.getDocument(documentId);
-        if (document != null) {
-            knowledgeBase.removeDocument(documentId);
-            // NOTE: InMemoryEmbeddingStore doesn't support deletion by document ID.
-            // In production, consider a persistent vector DB (e.g. Chroma, Qdrant).
-            logger.logDocumentProcessing(document.getFileName(), "Removed from knowledge base");
-            statistics.put("totalDocuments", Math.max(0, (Integer) statistics.get("totalDocuments") - 1));
+        if (document == null) {
+            return;
+        }
+
+        knowledgeBase.removeDocument(documentId);
+        int removedChunks = removeEmbeddings(embeddingStore, documentEmbeddingIds, document);
+
+        logger.logDocumentProcessing(document.getFileName(),
+                "Removed from knowledge base (" + removedChunks + " chunks dropped from the vector store)");
+
+        statistics.put("totalDocuments", Math.max(0, (Integer) statistics.get("totalDocuments") - 1));
+        // Mirror addDocument, which counts the document's own chunk count - that
+        // is a paragraph estimate rather than an embedding count when embedding
+        // was unavailable, and the two must cancel out.
+        statistics.put("totalChunks",
+                Math.max(0, (Integer) statistics.get("totalChunks") - document.getChunkCount()));
+
+        persistIndex();
+    }
+
+    /**
+     * Drop a document's chunks from the vector store. Without this the chunks
+     * stay searchable after the document is deleted, so the assistant keeps
+     * answering from a document the user removed.
+     *
+     * @return number of chunks removed
+     */
+    static int removeEmbeddings(EmbeddingStore<TextSegment> store, Map<String, List<String>> embeddingIdsByDocument,
+            DocumentEntry document) {
+
+        List<String> embeddingIds = embeddingIdsByDocument.remove(document.getId());
+
+        if (embeddingIds == null || embeddingIds.isEmpty()) {
+            // Never embedded - the model failed to load, or embedding threw and
+            // the document was indexed by paragraph count only.
+            return 0;
+        }
+
+        if (store == null) {
+            return 0;
+        }
+
+        try {
+            store.removeAll(embeddingIds);
+            return embeddingIds.size();
+        } catch (Exception e) {
+            logger.error("Failed to remove embeddings for: " + document.getFileName(), e);
+            // Put them back so a later delete, or a store swap, can retry.
+            embeddingIdsByDocument.put(document.getId(), embeddingIds);
+            return 0;
         }
     }
 

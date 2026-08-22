@@ -55,7 +55,7 @@
                </tooltip>
             </Tab>
             
-            <Tab fx:id="settingsTab" id="settingsTab" text="⚙️ Settings">
+            <Tab fx:id="settingsTab" id="settingsTab" text="⚙ Settings">
                <tooltip>
                   <Tooltip text="Configure API settings, application preferences, and view system information" />
                </tooltip>

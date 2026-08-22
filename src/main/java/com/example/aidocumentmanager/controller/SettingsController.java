@@ -85,6 +85,10 @@ public class SettingsController {
     @FXML
     private Slider maxRetrievalResultsSlider;
     @FXML
+    private Slider similarityThresholdSlider;
+    @FXML
+    private Label similarityThresholdLabel;
+    @FXML
     private Label maxRetrievalResultsLabel;
 
     // FXML Controls - Statistics and Info
@@ -119,9 +123,6 @@ public class SettingsController {
             updateProviderVisibility(newVal);
         });
 
-        // Initialize themes
-        themeCombo.setItems(FXCollections.observableArrayList("Light", "Dark", "System Default"));
-
         setupControls();
         setupEventHandlers();
         loadSettings();
@@ -137,12 +138,13 @@ public class SettingsController {
                 "gpt-4o");
         modelSelectionCombo.setValue("gpt-4o-mini");
 
-        // Theme options
-        themeCombo.getItems().addAll(
-                "Light",
-                "Dark",
-                "System Default");
-        themeCombo.setValue("Light");
+        // Theme options. Populated once - filling the combo here as well as in
+        // initialize() used to list every theme twice.
+        themeCombo.setItems(FXCollections.observableArrayList(
+                ThemeManager.THEME_LIGHT,
+                ThemeManager.THEME_DARK,
+                ThemeManager.THEME_SYSTEM));
+        themeCombo.setValue(ThemeManager.THEME_SYSTEM);
 
         // Slider configurations
         maxChatHistorySlider.setMin(5);
@@ -168,6 +170,16 @@ public class SettingsController {
         maxRetrievalResultsSlider.setValue(3);
         maxRetrievalResultsSlider.setMajorTickUnit(1);
         maxRetrievalResultsSlider.setShowTickLabels(true);
+
+        // The threshold is compared against langchain4j's rescaled relevance
+        // score, (cosine + 1) / 2, so 0.5 means "cosine 0" and 1.0 is an exact
+        // match. Past roughly 0.8 nothing matches at all, hence the ceiling.
+        similarityThresholdSlider.setMin(0.0);
+        similarityThresholdSlider.setMax(0.9);
+        similarityThresholdSlider.setValue(0.5);
+        similarityThresholdSlider.setMajorTickUnit(0.1);
+        similarityThresholdSlider.setBlockIncrement(0.05);
+        similarityThresholdSlider.setShowTickLabels(true);
     }
 
     private void setupEventHandlers() {
@@ -183,6 +195,9 @@ public class SettingsController {
 
         maxRetrievalResultsSlider.valueProperty().addListener((obs, oldVal, newVal) -> maxRetrievalResultsLabel
                 .setText(String.valueOf(newVal.intValue()) + " results"));
+
+        similarityThresholdSlider.valueProperty().addListener((obs, oldVal, newVal) -> similarityThresholdLabel
+                .setText(String.format("%.2f", newVal.doubleValue())));
 
         // API Key field listener
         openaiApiKeyField.textProperty().addListener((obs, oldText, newText) -> {
@@ -447,6 +462,7 @@ public class SettingsController {
         config.setChunkSize((int) chunkSizeSlider.getValue());
         config.setChunkOverlap((int) overlapSlider.getValue());
         config.setMaxRetrievalResults((int) maxRetrievalResultsSlider.getValue());
+        config.setSimilarityThreshold(Math.round(similarityThresholdSlider.getValue() * 100.0) / 100.0);
 
         // Update environment variable for API key
         if (!openaiApiKeyField.getText().isEmpty()) {
@@ -483,6 +499,7 @@ public class SettingsController {
         chunkSizeSlider.setValue(config.getChunkSize());
         overlapSlider.setValue(config.getChunkOverlap());
         maxRetrievalResultsSlider.setValue(config.getMaxRetrievalResults());
+        similarityThresholdSlider.setValue(config.getSimilarityThreshold());
 
         // Check current API key from environment
         String envApiKey = System.getenv("OPENAI_API_KEY");
@@ -500,12 +517,13 @@ public class SettingsController {
         maxChatHistorySlider.setValue(10);
         enableLoggingCheck.setSelected(true);
         autoSaveCheck.setSelected(true);
-        themeCombo.setValue("Light");
+        themeCombo.setValue(ThemeManager.THEME_SYSTEM);
 
         // Reset advanced settings
         chunkSizeSlider.setValue(500);
         overlapSlider.setValue(100);
         maxRetrievalResultsSlider.setValue(3);
+        similarityThresholdSlider.setValue(0.5);
 
         // Clear connection status
         connectionStatusLabel.setText("");
