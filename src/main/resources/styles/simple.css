@@ -45,11 +45,15 @@
 }
 
 /* Modena draws a blue focus ring inside the selected tab. The selected tab is
-   already obvious from its background, so the ring is just noise. */
-.tab-pane > .tab-header-area > .headers-region > .tab:focused > .focus-indicator {
-    -fx-border-color: transparent;
-    -fx-border-width: 0;
-    -fx-border-insets: 0;
+   already obvious from its background, so the ring is just noise.
+
+   This mirrors modena.css exactly - the :focused belongs on .tab-pane, not on
+   .tab, and .focus-indicator is a descendant of .tab rather than its child.
+   Modena paints the ring as two border layers, so both are cleared. */
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+    -fx-border-color: transparent, transparent;
+    -fx-border-width: 0, 0;
+    -fx-border-insets: 0, 0;
 }
 
 /* Explanatory text under a control. */
