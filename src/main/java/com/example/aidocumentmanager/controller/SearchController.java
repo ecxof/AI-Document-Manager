@@ -121,7 +121,7 @@ public class SearchController {
     private String computeRelevance(DocumentEntry doc) {
         String query = searchField.getText();
         if (query == null || query.isBlank() || doc.getContent() == null)
-            return "—";
+            return "-";
         String content = doc.getContent().toLowerCase();
         String[] terms = query.toLowerCase().split("\\s+");
         int hits = 0;
@@ -297,7 +297,7 @@ public class SearchController {
             handleSearch();
         }
 
-        searchStatusLabel.setText("Filters applied — " + describeFilters());
+        searchStatusLabel.setText("Filters applied: " + describeFilters());
         logger.logUserAction("Search", "Advanced filters applied: " + describeFilters());
     }
 

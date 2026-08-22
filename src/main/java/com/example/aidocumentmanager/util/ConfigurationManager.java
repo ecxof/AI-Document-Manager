@@ -23,6 +23,14 @@ public class ConfigurationManager {
     private static final String CURRENT_SCHEMA_VERSION = "1";
     private static final String SCHEMA_VERSION_KEY = "config.schema.version";
     private static final String SIMILARITY_THRESHOLD_KEY = "rag.similarity.threshold";
+    /**
+     * langchain4j compares this against (cosineSimilarity + 1) / 2, so 0.5 is
+     * exactly cosine 0. Sentence embeddings are effectively never negatively
+     * correlated, so anything below 0.5 cannot reject a chunk at all - measured
+     * over a 102-chunk document, no chunk scored under 0.45 for any query,
+     * including deliberately unrelated ones. 0.5 is therefore the lowest value
+     * that still means something.
+     */
     private static final String DEFAULT_SIMILARITY_THRESHOLD = "0.5";
 
     private final Properties properties;
@@ -161,22 +169,41 @@ public class ConfigurationManager {
      * deliberate user setting is never overwritten.
      */
     private void migrateConfiguration() {
-        String version = properties.getProperty(SCHEMA_VERSION_KEY);
+        int version = getSchemaVersion();
 
-        if (version == null) {
+        // Each step uses the literal value that shipped at the time rather than
+        // the current default, so the hops stay correct as the default moves on.
+
+        if (version < 1) {
             // v0 -> v1: the similarity threshold shipped as 0.7, but langchain4j
             // does not compare it against raw cosine similarity - it rescales with
             // (cosineSimilarity + 1) / 2. So 0.7 demanded a cosine of 0.4, which
             // short questions rarely reach against prose chunks, and every chunk
             // of a correctly indexed document got filtered out of retrieval.
-            if ("0.7".equals(properties.getProperty(SIMILARITY_THRESHOLD_KEY))) {
-                properties.setProperty(SIMILARITY_THRESHOLD_KEY, DEFAULT_SIMILARITY_THRESHOLD);
-                logger.info("Migrated " + SIMILARITY_THRESHOLD_KEY + " from 0.7 to "
-                        + DEFAULT_SIMILARITY_THRESHOLD + " so document retrieval returns matches again.");
-            }
+            migrateThreshold("0.7", "0.5");
         }
 
         properties.setProperty(SCHEMA_VERSION_KEY, CURRENT_SCHEMA_VERSION);
+    }
+
+    private int getSchemaVersion() {
+        try {
+            return Integer.parseInt(properties.getProperty(SCHEMA_VERSION_KEY, "0").trim());
+        } catch (NumberFormatException unreadable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Replace the threshold only when it still holds the superseded default, so
+     * a value the user chose deliberately is never overwritten.
+     */
+    private void migrateThreshold(String supersededDefault, String replacement) {
+        if (supersededDefault.equals(properties.getProperty(SIMILARITY_THRESHOLD_KEY))) {
+            properties.setProperty(SIMILARITY_THRESHOLD_KEY, replacement);
+            logger.info("Migrated " + SIMILARITY_THRESHOLD_KEY + " from " + supersededDefault + " to "
+                    + replacement + " so document retrieval returns matches again.");
+        }
     }
 
     /**

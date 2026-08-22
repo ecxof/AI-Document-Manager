@@ -173,7 +173,9 @@ public class SettingsController {
 
         // The threshold is compared against langchain4j's rescaled relevance
         // score, (cosine + 1) / 2, so 0.5 means "cosine 0" and 1.0 is an exact
-        // match. Past roughly 0.8 nothing matches at all, hence the ceiling.
+        // match. Below 0.5 nothing is ever rejected and above roughly 0.7
+        // genuinely relevant chunks start dropping out, so the useful range is
+        // narrow and the slider is bounded well inside it.
         similarityThresholdSlider.setMin(0.0);
         similarityThresholdSlider.setMax(0.9);
         similarityThresholdSlider.setValue(0.5);
