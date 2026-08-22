@@ -100,7 +100,7 @@ public class AIService {
             this.embeddingDimension = embeddingModel.embed("dimension probe").content().dimension();
             logger.info("Embedding model initialized successfully.");
         } catch (Exception e) {
-            logger.error("Failed to initialize embedding model — RAG will be disabled.", e);
+            logger.error("Failed to initialize embedding model, so RAG will be disabled.", e);
             this.embeddingModel = null;
             this.embeddingStore = null;
             this.indexStore = null;
