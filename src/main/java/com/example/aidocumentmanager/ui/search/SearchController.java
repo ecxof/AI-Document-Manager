@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SearchController {
@@ -77,10 +76,7 @@ public class SearchController {
     private ObservableList<DocumentEntry> searchResults;
 
     // Filters state
-    private String activeFileType = "All Types";
-    private String activeStatus = "All Statuses";
-    private long activeMinBytes = 0;
-    private long activeMaxBytes = Long.MAX_VALUE;
+    private DocumentFilter activeFilter = DocumentFilter.unfiltered();
 
     public SearchController() {
         this.searchResults = FXCollections.observableArrayList();
@@ -112,31 +108,7 @@ public class SearchController {
         statusColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().isIndexed() ? "INDEXED" : "NOT INDEXED"));
         relevanceColumn
-                .setCellValueFactory(cellData -> new SimpleStringProperty(computeRelevance(cellData.getValue())));
-    }
-
-    /**
-     * Computes a simple relevance score based on how many keywords appear.
-     */
-    private String computeRelevance(DocumentEntry doc) {
-        String query = searchField.getText();
-        if (query == null || query.isBlank() || doc.getContent() == null)
-            return "-";
-        String content = doc.getContent().toLowerCase();
-        String[] terms = query.toLowerCase().split("\\s+");
-        int hits = 0;
-        for (String term : terms) {
-            int idx = 0;
-            while ((idx = content.indexOf(term, idx)) != -1) {
-                hits++;
-                idx += term.length();
-            }
-        }
-        if (hits == 0)
-            return "Low";
-        if (hits < 5)
-            return "Medium";
-        return "High";
+                .setCellValueFactory(cellData -> new SimpleStringProperty(DocumentSearch.relevance(cellData.getValue(), searchField.getText())));
     }
 
     private void setupEventHandlers() {
@@ -154,20 +126,20 @@ public class SearchController {
 
     private void setupSearchOptions() {
         searchModeCombo.getItems().addAll(
-                "Content Search",
-                "Filename Search",
-                "Full Text Search");
-        searchModeCombo.setValue("Content Search");
+                DocumentSearch.CONTENT_SEARCH,
+                DocumentSearch.FILENAME_SEARCH,
+                DocumentSearch.FULL_TEXT_SEARCH);
+        searchModeCombo.setValue(DocumentSearch.CONTENT_SEARCH);
     }
 
     private void setupFilterOptions() {
         fileTypeFilter.getItems().addAll(
-                "All Types", "TXT", "PDF", "DOCX", "MD", "JAVA", "JSON", "XML", "YAML");
-        fileTypeFilter.setValue("All Types");
+                DocumentFilter.ALL_TYPES, "TXT", "PDF", "DOCX", "MD", "JAVA", "JSON", "XML", "YAML");
+        fileTypeFilter.setValue(DocumentFilter.ALL_TYPES);
 
         statusFilter.getItems().addAll(
-                "All Statuses", "INDEXED", "NOT INDEXED");
-        statusFilter.setValue("All Statuses");
+                DocumentFilter.ALL_STATUSES, "INDEXED", "NOT INDEXED");
+        statusFilter.setValue(DocumentFilter.ALL_STATUSES);
     }
 
     // =========================================================================
@@ -194,9 +166,10 @@ public class SearchController {
     private void performSearch(String query) {
         // Read JavaFX controls on the FX thread; the Task body runs on a background
         // thread and must not touch the scene graph.
-        final String searchMode = searchModeCombo.getValue();
-        final boolean caseSensitive = caseSensitiveCheck.isSelected();
-        final boolean wholeWords = wholeWordsCheck.isSelected();
+        final DocumentSearch.Criteria criteria = new DocumentSearch.Criteria(
+                query, searchModeCombo.getValue(), caseSensitiveCheck.isSelected(), wholeWordsCheck.isSelected());
+        final DocumentFilter filter = activeFilter;
+        final List<DocumentEntry> documents = aiService.getKnowledgeBase().getAllDocuments();
 
         Task<List<DocumentEntry>> searchTask = new Task<List<DocumentEntry>>() {
             @Override
@@ -206,7 +179,7 @@ public class SearchController {
 
                 Thread.sleep(300);
 
-                return performActualSearch(query, searchMode, caseSensitive, wholeWords);
+                return DocumentSearch.search(documents, criteria, filter);
             }
 
             @Override
@@ -249,47 +222,17 @@ public class SearchController {
         searchThread.start();
     }
 
-    private List<DocumentEntry> performActualSearch(String query, String searchMode,
-            boolean caseSensitive, boolean wholeWords) {
-
-        List<DocumentEntry> allDocuments = aiService.getKnowledgeBase().getAllDocuments();
-        String searchQuery = caseSensitive ? query : query.toLowerCase();
-
-        List<DocumentEntry> results = new ArrayList<>();
-        for (DocumentEntry doc : allDocuments) {
-            // Text match
-            if (!matchesSearchCriteria(doc, searchQuery, searchMode, caseSensitive, wholeWords))
-                continue;
-            // Advanced filters
-            if (!matchesActiveFilters(doc))
-                continue;
-            results.add(doc);
-        }
-        return results;
-    }
-
     // =========================================================================
     // Advanced Filter Handlers
     // =========================================================================
 
     @FXML
     private void handleApplyFilters() {
-        activeFileType = fileTypeFilter.getValue() != null ? fileTypeFilter.getValue() : "All Types";
-        activeStatus = statusFilter.getValue() != null ? statusFilter.getValue() : "All Statuses";
-
-        try {
-            String minStr = minSizeField.getText().trim();
-            activeMinBytes = minStr.isEmpty() ? 0 : Long.parseLong(minStr) * 1024;
-        } catch (NumberFormatException e) {
-            activeMinBytes = 0;
-        }
-
-        try {
-            String maxStr = maxSizeField.getText().trim();
-            activeMaxBytes = maxStr.isEmpty() ? Long.MAX_VALUE : Long.parseLong(maxStr) * 1024;
-        } catch (NumberFormatException e) {
-            activeMaxBytes = Long.MAX_VALUE;
-        }
+        activeFilter = new DocumentFilter(
+                fileTypeFilter.getValue() != null ? fileTypeFilter.getValue() : DocumentFilter.ALL_TYPES,
+                statusFilter.getValue() != null ? statusFilter.getValue() : DocumentFilter.ALL_STATUSES,
+                parseSizeInBytes(minSizeField.getText(), 0),
+                parseSizeInBytes(maxSizeField.getText(), Long.MAX_VALUE));
 
         // Re-run search with filters applied
         String query = searchField.getText().trim();
@@ -297,62 +240,32 @@ public class SearchController {
             handleSearch();
         }
 
-        searchStatusLabel.setText("Filters applied: " + describeFilters());
-        logger.logUserAction("Search", "Advanced filters applied: " + describeFilters());
+        String described = activeFilter.describe();
+        searchStatusLabel.setText("Filters applied: " + described);
+        logger.logUserAction("Search", "Advanced filters applied: " + described);
+    }
+
+    /** The size fields are in KB; anything unparseable falls back to no bound. */
+    private static long parseSizeInBytes(String text, long fallback) {
+        try {
+            String trimmed = text.trim();
+            return trimmed.isEmpty() ? fallback : Long.parseLong(trimmed) * 1024;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     @FXML
     private void handleClearFilters() {
-        fileTypeFilter.setValue("All Types");
-        statusFilter.setValue("All Statuses");
+        fileTypeFilter.setValue(DocumentFilter.ALL_TYPES);
+        statusFilter.setValue(DocumentFilter.ALL_STATUSES);
         minSizeField.clear();
         maxSizeField.clear();
 
-        activeFileType = "All Types";
-        activeStatus = "All Statuses";
-        activeMinBytes = 0;
-        activeMaxBytes = Long.MAX_VALUE;
+        activeFilter = DocumentFilter.unfiltered();
 
         searchStatusLabel.setText("Filters cleared");
         logger.logUserAction("Search", "Advanced filters cleared");
-    }
-
-    private boolean matchesActiveFilters(DocumentEntry doc) {
-        // File type filter
-        if (!"All Types".equals(activeFileType)) {
-            String docType = doc.getType() != null ? doc.getType().toString().toUpperCase() : "";
-            if (!docType.equalsIgnoreCase(activeFileType))
-                return false;
-        }
-
-        // Status filter
-        if (!"All Statuses".equals(activeStatus)) {
-            boolean indexed = doc.isIndexed();
-            if ("INDEXED".equals(activeStatus) && !indexed)
-                return false;
-            if ("NOT INDEXED".equals(activeStatus) && indexed)
-                return false;
-        }
-
-        // Size filter
-        long fileSizeBytes = doc.getFileSize();
-        if (fileSizeBytes < activeMinBytes || fileSizeBytes > activeMaxBytes)
-            return false;
-
-        return true;
-    }
-
-    private String describeFilters() {
-        StringBuilder sb = new StringBuilder();
-        if (!"All Types".equals(activeFileType))
-            sb.append("Type=").append(activeFileType).append(" ");
-        if (!"All Statuses".equals(activeStatus))
-            sb.append("Status=").append(activeStatus).append(" ");
-        if (activeMinBytes > 0)
-            sb.append("MinSize=").append(activeMinBytes / 1024).append("KB ");
-        if (activeMaxBytes < Long.MAX_VALUE)
-            sb.append("MaxSize=").append(activeMaxBytes / 1024).append("KB ");
-        return sb.length() == 0 ? "none" : sb.toString().trim();
     }
 
     // =========================================================================
@@ -378,22 +291,7 @@ public class SearchController {
             return;
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
-            // Write CSV header
-            writer.println("File Name,Type,Size,Status,Relevance,Content Preview");
-
-            // Write rows
-            for (DocumentEntry doc : searchResults) {
-                String name = escapeCsv(doc.getFileName());
-                String type = escapeCsv(doc.getType() != null ? doc.getType().toString() : "");
-                String size = escapeCsv(doc.getFormattedFileSize());
-                String status = escapeCsv(doc.isIndexed() ? "INDEXED" : "NOT INDEXED");
-                String relevance = escapeCsv(computeRelevance(doc));
-                String preview = escapeCsv(doc.getContent() != null
-                        ? doc.getContent().substring(0, Math.min(200, doc.getContent().length())).replace("\n", " ")
-                        : "");
-
-                writer.println(name + "," + type + "," + size + "," + status + "," + relevance + "," + preview);
-            }
+            SearchResultsCsvWriter.write(writer, searchResults, searchField.getText().trim());
 
             searchStatusLabel.setText("Exported " + searchResults.size() + " results to: " + file.getName());
             logger.logUserAction("Search Export",
@@ -409,50 +307,9 @@ public class SearchController {
         }
     }
 
-    private String escapeCsv(String value) {
-        if (value == null)
-            return "\"\"";
-        return "\"" + value.replace("\"", "\"\"") + "\"";
-    }
-
     // =========================================================================
     // Helper Methods
     // =========================================================================
-
-    private boolean matchesSearchCriteria(DocumentEntry document, String query, String searchMode,
-            boolean caseSensitive, boolean wholeWords) {
-        switch (searchMode) {
-            case "Filename Search":
-                return matchesText(document.getFileName(), query, caseSensitive, wholeWords);
-
-            case "Content Search":
-                if (document.getContent() == null)
-                    return false;
-                return matchesText(document.getContent(), query, caseSensitive, wholeWords);
-
-            case "Full Text Search":
-            default:
-                return matchesText(document.getFileName(), query, caseSensitive, wholeWords) ||
-                        matchesText(document.getTitle(), query, caseSensitive, wholeWords) ||
-                        (document.getContent() != null &&
-                                matchesText(document.getContent(), query, caseSensitive, wholeWords));
-        }
-    }
-
-    private boolean matchesText(String text, String query, boolean caseSensitive, boolean wholeWords) {
-        if (text == null || text.isEmpty())
-            return false;
-
-        String searchText = caseSensitive ? text : text.toLowerCase();
-
-        if (wholeWords) {
-            String pattern = "\\b" + java.util.regex.Pattern.quote(query) + "\\b";
-            int flags = caseSensitive ? 0 : java.util.regex.Pattern.CASE_INSENSITIVE;
-            return java.util.regex.Pattern.compile(pattern, flags).matcher(searchText).find();
-        } else {
-            return searchText.contains(query);
-        }
-    }
 
     private void updateResultsDisplay(List<DocumentEntry> results) {
         int count = results != null ? results.size() : 0;

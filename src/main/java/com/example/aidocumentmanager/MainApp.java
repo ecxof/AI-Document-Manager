@@ -8,6 +8,7 @@ import com.example.aidocumentmanager.common.LoggerUtil;
 import com.example.aidocumentmanager.ui.DialogService;
 import com.example.aidocumentmanager.config.ConfigurationManager;
 import com.example.aidocumentmanager.ui.ThemeManager;
+import com.example.aidocumentmanager.ui.WindowStateBinder;
 
 public class MainApp extends Application {
 
@@ -56,27 +57,8 @@ public class MainApp extends Application {
             primaryStage.setMinWidth(800);
             primaryStage.setMinHeight(600);
 
-            // Restore maximized state
-            if (config.isWindowMaximized()) {
-                primaryStage.setMaximized(true);
-            }
-
-            // Handle window state changes
-            primaryStage.widthProperty().addListener((obs, oldVal, newVal) -> {
-                if (!primaryStage.isMaximized()) {
-                    config.setWindowWidth(newVal.intValue());
-                }
-            });
-
-            primaryStage.heightProperty().addListener((obs, oldVal, newVal) -> {
-                if (!primaryStage.isMaximized()) {
-                    config.setWindowHeight(newVal.intValue());
-                }
-            });
-
-            primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> {
-                config.setWindowMaximized(newVal);
-            });
+            // Restore the saved window state and keep recording changes to it
+            WindowStateBinder.bind(primaryStage, config);
 
             // Handle application close
             primaryStage.setOnCloseRequest(e -> {

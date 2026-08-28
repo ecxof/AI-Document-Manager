@@ -1,7 +1,6 @@
 package com.example.aidocumentmanager.ui.settings;
 
 import com.example.aidocumentmanager.ai.AIService;
-import com.example.aidocumentmanager.common.ByteFormat;
 import com.example.aidocumentmanager.common.LoggerUtil;
 import com.example.aidocumentmanager.common.ValidationUtil;
 import com.example.aidocumentmanager.config.ConfigurationManager;
@@ -19,7 +18,6 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class SettingsController {
@@ -120,7 +118,8 @@ public class SettingsController {
         logger.info("Initializing SettingsController");
 
         // Initialize API Provider
-        providerCombo.setItems(FXCollections.observableArrayList("OpenAI", "Hugging Face"));
+        providerCombo.setItems(FXCollections.observableArrayList(
+                SettingsForm.DISPLAY_OPENAI, SettingsForm.DISPLAY_HUGGINGFACE));
         providerCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
             updateProviderVisibility(newVal);
         });
@@ -136,9 +135,9 @@ public class SettingsController {
     private void setupControls() {
         // API Model options
         modelSelectionCombo.getItems().addAll(
-                "gpt-4o-mini",
+                SettingsForm.DEFAULT_OPENAI_MODEL,
                 "gpt-4o");
-        modelSelectionCombo.setValue("gpt-4o-mini");
+        modelSelectionCombo.setValue(SettingsForm.DEFAULT_OPENAI_MODEL);
 
         // Theme options. Populated once - filling the combo here as well as in
         // initialize() used to list every theme twice.
@@ -227,7 +226,7 @@ public class SettingsController {
         String provider = providerCombo.getValue();
         String apiKey;
 
-        if ("OpenAI".equals(provider)) {
+        if (SettingsForm.DISPLAY_OPENAI.equals(provider)) {
             apiKey = openaiApiKeyField.getText().trim();
             if (apiKey.isEmpty() || !ValidationUtil.isValidOpenAIApiKey(apiKey)) {
                 connectionStatusLabel.setText("❌ Invalid OpenAI API key");
@@ -335,31 +334,8 @@ public class SettingsController {
             return;
 
         try {
-            // Build a settings map from what is currently saved in config
-            Map<String, Object> settingsMap = new LinkedHashMap<>();
-            settingsMap.put("exportedAt", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            settingsMap.put("appVersion", "1.0-SNAPSHOT");
-
-            Map<String, Object> apiSection = new LinkedHashMap<>();
-            apiSection.put("provider", config.getAIProvider());
-            apiSection.put("openAIModel", config.getOpenAIModel());
-            apiSection.put("huggingFaceModel", config.getHuggingFaceModel());
-            apiSection.put("openAIApiKey", "[REDACTED]");
-            apiSection.put("huggingFaceApiKey", "[REDACTED]");
-            settingsMap.put("api", apiSection);
-
-            Map<String, Object> appSection = new LinkedHashMap<>();
-            appSection.put("maxChatHistory", config.getMaxChatHistory());
-            appSection.put("theme", config.getTheme());
-            appSection.put("loggingEnabled", config.isLoggingEnabled());
-            appSection.put("autoSave", config.isAutoSaveEnabled());
-            settingsMap.put("application", appSection);
-
-            Map<String, Object> ragSection = new LinkedHashMap<>();
-            ragSection.put("chunkSize", config.getChunkSize());
-            ragSection.put("chunkOverlap", config.getChunkOverlap());
-            ragSection.put("maxRetrievalResults", config.getMaxRetrievalResults());
-            settingsMap.put("rag", ragSection);
+            Map<String, Object> settingsMap = SettingsExporter.export(config,
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -441,32 +417,22 @@ public class SettingsController {
     }
 
     private void saveSettings() {
-        // Save settings to ConfigurationManager
-        config.setAIProvider(providerCombo.getValue().toLowerCase().replace(" ", ""));
-        config.setOpenAIApiKey(openaiApiKeyField.getText());
-        String selectedModel = modelSelectionCombo.getValue();
-        if (selectedModel == null || selectedModel.trim().isEmpty() || "gpt-3.5-turbo".equals(selectedModel.trim())) {
-            selectedModel = "gpt-4o-mini";
-        }
-        config.setOpenAIModel(selectedModel);
-        config.setHuggingFaceApiKey(hfApiKeyField.getText());
-        String hfModel = hfModelField.getText();
-        if (hfModel == null || hfModel.trim().isEmpty() || "gpt2".equalsIgnoreCase(hfModel.trim())) {
-            hfModel = "meta-llama/Llama-3.1-8B-Instruct";
-        }
-        config.setHuggingFaceModel(hfModel);
+        SettingsForm form = new SettingsForm(
+                SettingsForm.providerKey(providerCombo.getValue()),
+                openaiApiKeyField.getText(),
+                modelSelectionCombo.getValue(),
+                hfApiKeyField.getText(),
+                hfModelField.getText(),
+                (int) maxChatHistorySlider.getValue(),
+                enableLoggingCheck.isSelected(),
+                autoSaveCheck.isSelected(),
+                themeCombo.getValue(),
+                (int) chunkSizeSlider.getValue(),
+                (int) overlapSlider.getValue(),
+                (int) maxRetrievalResultsSlider.getValue(),
+                similarityThresholdSlider.getValue()).normalized();
 
-        // Save application settings
-        config.setMaxChatHistory((int) maxChatHistorySlider.getValue());
-        config.setLoggingEnabled(enableLoggingCheck.isSelected());
-        config.setAutoSaveEnabled(autoSaveCheck.isSelected());
-        config.setTheme(themeCombo.getValue());
-
-        // Save advanced settings
-        config.setChunkSize((int) chunkSizeSlider.getValue());
-        config.setChunkOverlap((int) overlapSlider.getValue());
-        config.setMaxRetrievalResults((int) maxRetrievalResultsSlider.getValue());
-        config.setSimilarityThreshold(Math.round(similarityThresholdSlider.getValue() * 100.0) / 100.0);
+        form.applyTo(config);
 
         // Update environment variable for API key
         if (!openaiApiKeyField.getText().isEmpty()) {
@@ -478,32 +444,30 @@ public class SettingsController {
     }
 
     private void loadSettings() {
-        // Load API settings
-        String provider = config.getAIProvider();
-        providerCombo.setValue(provider.equalsIgnoreCase("openai") ? "OpenAI" : "Hugging Face");
+        SettingsForm form = SettingsForm.from(config);
+
+        providerCombo.setValue(SettingsForm.providerDisplayName(form.provider()));
         updateProviderVisibility(providerCombo.getValue());
 
-        openaiApiKeyField.setText(config.getOpenAIApiKey());
-        String configuredModel = config.getOpenAIModel();
+        openaiApiKeyField.setText(form.openAIApiKey());
+        String configuredModel = form.openAIModel();
         if (!modelSelectionCombo.getItems().contains(configuredModel)) {
-            configuredModel = "gpt-4o-mini";
+            configuredModel = SettingsForm.DEFAULT_OPENAI_MODEL;
             config.setOpenAIModel(configuredModel);
         }
         modelSelectionCombo.setValue(configuredModel);
-        hfApiKeyField.setText(config.getHuggingFaceApiKey());
-        hfModelField.setText(config.getHuggingFaceModel());
+        hfApiKeyField.setText(form.huggingFaceApiKey());
+        hfModelField.setText(form.huggingFaceModel());
 
-        // Load application settings
-        maxChatHistorySlider.setValue(config.getMaxChatHistory());
-        enableLoggingCheck.setSelected(config.isLoggingEnabled());
-        autoSaveCheck.setSelected(config.isAutoSaveEnabled());
-        themeCombo.setValue(config.getTheme());
+        maxChatHistorySlider.setValue(form.maxChatHistory());
+        enableLoggingCheck.setSelected(form.loggingEnabled());
+        autoSaveCheck.setSelected(form.autoSaveEnabled());
+        themeCombo.setValue(form.theme());
 
-        // Load advanced settings
-        chunkSizeSlider.setValue(config.getChunkSize());
-        overlapSlider.setValue(config.getChunkOverlap());
-        maxRetrievalResultsSlider.setValue(config.getMaxRetrievalResults());
-        similarityThresholdSlider.setValue(config.getSimilarityThreshold());
+        chunkSizeSlider.setValue(form.chunkSize());
+        overlapSlider.setValue(form.chunkOverlap());
+        maxRetrievalResultsSlider.setValue(form.maxRetrievalResults());
+        similarityThresholdSlider.setValue(form.similarityThreshold());
 
         // Check current API key from environment
         String envApiKey = System.getenv("OPENAI_API_KEY");
@@ -513,21 +477,20 @@ public class SettingsController {
     }
 
     private void resetToDefaults() {
-        // Reset API settings
+        SettingsForm defaults = SettingsForm.defaults();
+
         openaiApiKeyField.clear();
-        modelSelectionCombo.setValue("gpt-4o-mini");
+        modelSelectionCombo.setValue(defaults.openAIModel());
 
-        // Reset application settings
-        maxChatHistorySlider.setValue(10);
-        enableLoggingCheck.setSelected(true);
-        autoSaveCheck.setSelected(true);
-        themeCombo.setValue(ThemeManager.THEME_SYSTEM);
+        maxChatHistorySlider.setValue(defaults.maxChatHistory());
+        enableLoggingCheck.setSelected(defaults.loggingEnabled());
+        autoSaveCheck.setSelected(defaults.autoSaveEnabled());
+        themeCombo.setValue(defaults.theme());
 
-        // Reset advanced settings
-        chunkSizeSlider.setValue(500);
-        overlapSlider.setValue(100);
-        maxRetrievalResultsSlider.setValue(3);
-        similarityThresholdSlider.setValue(0.5);
+        chunkSizeSlider.setValue(defaults.chunkSize());
+        overlapSlider.setValue(defaults.chunkOverlap());
+        maxRetrievalResultsSlider.setValue(defaults.maxRetrievalResults());
+        similarityThresholdSlider.setValue(defaults.similarityThreshold());
 
         // Clear connection status
         connectionStatusLabel.setText("");
@@ -569,36 +532,13 @@ public class SettingsController {
     }
 
     private void updateSystemInfo() {
-        StringBuilder sysInfo = new StringBuilder();
-        sysInfo.append("System Information:\n\n");
-        sysInfo.append("Java Version: ").append(System.getProperty("java.version")).append("\n");
-        sysInfo.append("Java Vendor: ").append(System.getProperty("java.vendor")).append("\n");
-        sysInfo.append("OS Name: ").append(System.getProperty("os.name")).append("\n");
-        sysInfo.append("OS Version: ").append(System.getProperty("os.version")).append("\n");
-        sysInfo.append("Architecture: ").append(System.getProperty("os.arch")).append("\n");
-        sysInfo.append("User Home: ").append(System.getProperty("user.home")).append("\n");
-        sysInfo.append("Working Directory: ").append(System.getProperty("user.dir")).append("\n");
-
-        // Memory information
-        Runtime runtime = Runtime.getRuntime();
-        long maxMemory = runtime.maxMemory();
-        long totalMemory = runtime.totalMemory();
-        long freeMemory = runtime.freeMemory();
-        long usedMemory = totalMemory - freeMemory;
-
-        sysInfo.append("\nMemory Usage:\n");
-        sysInfo.append("• Used: ").append(ByteFormat.format(usedMemory)).append("\n");
-        sysInfo.append("• Free: ").append(ByteFormat.format(freeMemory)).append("\n");
-        sysInfo.append("• Total: ").append(ByteFormat.format(totalMemory)).append("\n");
-        sysInfo.append("• Max: ").append(ByteFormat.format(maxMemory)).append("\n");
-
         if (systemInfoArea != null) {
-            systemInfoArea.setText(sysInfo.toString());
+            systemInfoArea.setText(SystemInfo.describe());
         }
     }
 
     private void updateProviderVisibility(String provider) {
-        if ("OpenAI".equals(provider)) {
+        if (SettingsForm.DISPLAY_OPENAI.equals(provider)) {
             openaiSettingsBox.setVisible(true);
             openaiSettingsBox.setManaged(true);
             huggingfaceSettingsBox.setVisible(false);
