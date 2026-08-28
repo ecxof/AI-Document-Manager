@@ -10,7 +10,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -305,24 +304,6 @@ public class MainController {
         errorAlert.setHeaderText("An error occurred");
         errorAlert.setContentText(message);
         errorAlert.showAndWait();
-    }
-
-    /**
-     * Show information dialog
-     */
-    public void showInfoDialog(String title, String message) {
-        Alert infoAlert = new Alert(Alert.AlertType.INFORMATION);
-        infoAlert.setTitle(title);
-        infoAlert.setHeaderText(null);
-        infoAlert.setContentText(message);
-        infoAlert.showAndWait();
-    }
-
-    /**
-     * Get main stage for modal dialogs
-     */
-    public Stage getMainStage() {
-        return (Stage) mainBorderPane.getScene().getWindow();
     }
 
     // Menu action handlers

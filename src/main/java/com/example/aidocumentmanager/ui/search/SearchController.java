@@ -364,11 +364,6 @@ public class SearchController {
         logger.logUserAction("Search", "Cleared");
     }
 
-    public void performQuickSearch(String query) {
-        searchField.setText(query);
-        handleSearch();
-    }
-
     public void onViewActivated() {
         searchField.requestFocus();
     }
