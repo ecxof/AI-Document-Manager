@@ -16,7 +16,7 @@
             <Menu mnemonicParsing="false" text="View">
                <items>
                   <MenuItem mnemonicParsing="false" text="Chat" onAction="#handleNavigateToChat" accelerator="Ctrl+1" />
-                  <MenuItem mnemonicParsing="false" text="Admin Panel" onAction="#handleNavigateToAdmin" accelerator="Ctrl+2" />
+                  <MenuItem mnemonicParsing="false" text="Documents" onAction="#handleNavigateToDocuments" accelerator="Ctrl+2" />
                   <MenuItem mnemonicParsing="false" text="Search" onAction="#handleNavigateToSearch" accelerator="Ctrl+3" />
                   <MenuItem mnemonicParsing="false" text="Settings" onAction="#handleNavigateToSettings" accelerator="Ctrl+4" />
                   <SeparatorMenuItem />
@@ -43,7 +43,7 @@
                </tooltip>
             </Tab>
             
-            <Tab fx:id="adminTab" id="adminTab" text="📋 Admin">
+            <Tab fx:id="documentsTab" id="documentsTab" text="📋 Documents">
                <tooltip>
                   <Tooltip text="Upload and manage documents, view knowledge base statistics" />
                </tooltip>

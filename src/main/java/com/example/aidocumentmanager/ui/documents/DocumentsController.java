@@ -91,7 +91,7 @@ public class DocumentsController {
         // Initialize with empty data
         documentsTable.setItems(documentList);
 
-        logger.logUserAction("Admin Panel", "Opened");
+        logger.logUserAction("Documents Panel", "Opened");
     }
 
     private void setupTableColumns() {

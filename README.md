@@ -159,7 +159,7 @@ default, and what the similarity threshold actually compares against.
 ### Getting Started
 
 1. **Settings** - Choose provider, enter the API key, pick a model, and tune RAG parameters (chunk size, overlap, retrieval count, similarity threshold)
-2. **Admin** - Upload documents; view processing status and knowledge base statistics
+2. **Documents** - Upload documents; view processing status and knowledge base statistics
 3. **Chat** - Ask questions about your documents and get answers grounded in retrieved excerpts
 4. **Search** - Search across documents with filters, and export results to a file
 

@@ -40,7 +40,7 @@ public class MainController {
     @FXML
     private Tab chatTab;
     @FXML
-    private Tab adminTab;
+    private Tab documentsTab;
     @FXML
     private Tab searchTab;
     @FXML
@@ -90,7 +90,7 @@ public class MainController {
             return;
         String tabId = tab.getId();
         switch (tabId) {
-            case "adminTab" -> {
+            case "documentsTab" -> {
                 if (documentsController != null)
                     documentsController.onViewActivated();
             }
@@ -138,8 +138,8 @@ public class MainController {
                 case "chatTab":
                     content = loadChatView();
                     break;
-                case "adminTab":
-                    content = loadAdminView();
+                case "documentsTab":
+                    content = loadDocumentsView();
                     break;
                 case "searchTab":
                     content = loadSearchView();
@@ -177,9 +177,9 @@ public class MainController {
     }
 
     /**
-     * Load Admin View
+     * Load Documents View
      */
-    private Node loadAdminView() throws IOException {
+    private Node loadDocumentsView() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("documents/DocumentsView.fxml"));
         Node content = loader.load();
         documentsController = loader.getController();
@@ -280,7 +280,7 @@ public class MainController {
     public void navigateToTab(String tabId) {
         Tab targetTab = switch (tabId.toLowerCase()) {
             case "chat" -> chatTab;
-            case "admin" -> adminTab;
+            case "documents" -> documentsTab;
             case "search" -> searchTab;
             case "settings" -> settingsTab;
             default -> null;
@@ -299,7 +299,7 @@ public class MainController {
         return chatController;
     }
 
-    public DocumentsController getAdminController() {
+    public DocumentsController getDocumentsController() {
         return documentsController;
     }
 
@@ -359,8 +359,8 @@ public class MainController {
     }
 
     @FXML
-    private void handleNavigateToAdmin() {
-        navigateToTab("admin");
+    private void handleNavigateToDocuments() {
+        navigateToTab("documents");
     }
 
     @FXML

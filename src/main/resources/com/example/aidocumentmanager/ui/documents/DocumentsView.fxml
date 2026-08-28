@@ -9,7 +9,7 @@
    <top>
       <VBox spacing="10.0">
          <children>
-            <Label styleClass="title-label" text="Document Administration" />
+            <Label styleClass="title-label" text="Document Management" />
             <Separator />
 
             <!-- Statistics Panel -->

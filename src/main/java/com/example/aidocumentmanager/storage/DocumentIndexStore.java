@@ -29,7 +29,7 @@ import java.util.Map;
  * <p>
  * Everything lives in a single JSON file, written atomically. The three pieces
  * only make sense together: embeddings without their documents would answer
- * questions from a knowledge base the Admin panel shows as empty, and documents
+ * questions from a knowledge base the Documents tab shows as empty, and documents
  * without their embeddings would list files the assistant cannot see. Writing
  * one file means a crash mid-save can never leave that mismatch on disk.
  */
