@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Otherwise the chunks stay searchable and the assistant keeps answering from a
  * document the user deleted.
  */
-class EmbeddingDeletionTest {
+class EmbeddingIndexDeletionTest {
 
     private static final String POLICY_TEXT = """
             Employees may work remotely up to three days per week. Requests must be
@@ -91,7 +91,7 @@ class EmbeddingDeletionTest {
         assertTrue(anyMatchContains("How many remote days per week?", "three days per week"),
                 "precondition: the policy is retrievable before deletion");
 
-        int removed = AIService.removeEmbeddings(store, embeddingIdsByDocument, policy);
+        int removed = EmbeddingIndex.removeEmbeddings(store, embeddingIdsByDocument, policy);
 
         assertTrue(removed > 0, "deleting a document should report the chunks it dropped");
         assertFalse(anyMatchContains("How many remote days per week?", "three days per week"),
@@ -100,7 +100,7 @@ class EmbeddingDeletionTest {
 
     @Test
     void deletingOneDocumentLeavesTheOthersIntact() {
-        AIService.removeEmbeddings(store, embeddingIdsByDocument, policy);
+        EmbeddingIndex.removeEmbeddings(store, embeddingIdsByDocument, policy);
 
         assertTrue(anyMatchContains("What is for lunch on Friday?", "grilled salmon"),
                 "the remaining document must still be retrievable");
@@ -111,8 +111,8 @@ class EmbeddingDeletionTest {
 
     @Test
     void deletingTwiceIsHarmless() {
-        int first = AIService.removeEmbeddings(store, embeddingIdsByDocument, policy);
-        int second = AIService.removeEmbeddings(store, embeddingIdsByDocument, policy);
+        int first = EmbeddingIndex.removeEmbeddings(store, embeddingIdsByDocument, policy);
+        int second = EmbeddingIndex.removeEmbeddings(store, embeddingIdsByDocument, policy);
 
         assertTrue(first > 0);
         assertEquals(0, second, "a second delete has nothing left to remove");
@@ -122,6 +122,6 @@ class EmbeddingDeletionTest {
     void neverEmbeddedDocumentIsSkipped() {
         DocumentEntry unindexed = new DocumentEntry("scan.pdf", "/tmp/scan.pdf", "");
 
-        assertEquals(0, AIService.removeEmbeddings(store, new HashMap<>(), unindexed));
+        assertEquals(0, EmbeddingIndex.removeEmbeddings(store, new HashMap<>(), unindexed));
     }
 }

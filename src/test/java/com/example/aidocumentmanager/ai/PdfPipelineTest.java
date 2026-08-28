@@ -104,7 +104,7 @@ class PdfPipelineTest {
 
         // 4. Ask a question only the PDF can answer, against the reloaded index.
         EmbeddingModel embeddingModel = new AllMiniLmL6V2QuantizedEmbeddingModel();
-        List<EmbeddingMatch<TextSegment>> matches = AIService.retrieveWithFallback(
+        List<EmbeddingMatch<TextSegment>> matches = EmbeddingIndex.retrieveWithFallback(
                 restored.embeddingStore(),
                 embeddingModel.embed("How often should the turbine be inspected?").content(),
                 3,

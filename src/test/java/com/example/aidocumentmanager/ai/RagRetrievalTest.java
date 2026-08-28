@@ -57,7 +57,7 @@ class RagRetrievalTest {
 
     @Test
     void retrievesTheAnsweringChunkAtTheDefaultThreshold() {
-        List<EmbeddingMatch<TextSegment>> matches = AIService.retrieveWithFallback(embeddingStore, queryEmbedding, 3,
+        List<EmbeddingMatch<TextSegment>> matches = EmbeddingIndex.retrieveWithFallback(embeddingStore, queryEmbedding, 3,
                 0.5);
 
         assertFalse(matches.isEmpty(), "a directly related question must retrieve context");
@@ -70,7 +70,7 @@ class RagRetrievalTest {
         // 0.99 stands in for any threshold set too high for the corpus - the point
         // is that the user still gets an answer grounded in their document rather
         // than a bare question sent to the model.
-        List<EmbeddingMatch<TextSegment>> matches = AIService.retrieveWithFallback(embeddingStore, queryEmbedding, 3,
+        List<EmbeddingMatch<TextSegment>> matches = EmbeddingIndex.retrieveWithFallback(embeddingStore, queryEmbedding, 3,
                 0.99);
 
         assertFalse(matches.isEmpty(), "the fallback must return the closest chunks");
@@ -82,7 +82,7 @@ class RagRetrievalTest {
         // The reason a 0.7 threshold was silently dropping every chunk: langchain4j
         // compares minScore against (cosineSimilarity + 1) / 2, so 0.7 really asks
         // for a cosine of 0.4 - a bar on-topic questions clear only narrowly.
-        EmbeddingMatch<TextSegment> match = AIService
+        EmbeddingMatch<TextSegment> match = EmbeddingIndex
                 .retrieveWithFallback(embeddingStore, queryEmbedding, 1, 0.0)
                 .get(0);
 

@@ -1,6 +1,6 @@
 package com.example.aidocumentmanager.storage;
 
-import com.example.aidocumentmanager.ai.AIService;
+import com.example.aidocumentmanager.ai.EmbeddingIndex;
 import com.example.aidocumentmanager.domain.DocumentEntry;
 
 import dev.langchain4j.data.document.Document;
@@ -131,7 +131,7 @@ class DocumentIndexStoreTest {
 
     @Test
     void deletedDocumentDoesNotComeBackAfterRestart() {
-        AIService.removeEmbeddings(embeddingStore, embeddingIds, policy);
+        EmbeddingIndex.removeEmbeddings(embeddingStore, embeddingIds, policy);
         store.save(List.of(), embeddingIds, embeddingStore, DIMENSION);
 
         DocumentIndexStore.Snapshot restored = new DocumentIndexStore(indexDirectory).load(DIMENSION);
