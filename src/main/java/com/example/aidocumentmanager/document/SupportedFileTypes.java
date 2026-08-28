@@ -43,29 +43,4 @@ public class SupportedFileTypes {
         return lastDot > 0 ? fileName.substring(lastDot) : "";
     }
 
-    /**
-     * Get file type description for display
-     */
-    public static String getFileTypeDescription(String fileName) {
-        String extension = getFileExtension(fileName).toLowerCase();
-        return switch (extension) {
-            case ".pdf" -> "PDF Document";
-            case ".docx" -> "Word Document";
-            case ".txt" -> "Text File";
-            case ".md" -> "Markdown File";
-            case ".java" -> "Java Source File";
-            case ".xml" -> "XML File";
-            case ".json" -> "JSON File";
-            case ".yml", ".yaml" -> "YAML File";
-            case ".properties" -> "Properties File";
-            default -> "Document";
-        };
-    }
-
-    /**
-     * Check if file can be processed for embeddings
-     */
-    public static boolean canProcessForEmbeddings(String fileName) {
-        return isSupportedFile(fileName);
-    }
 }

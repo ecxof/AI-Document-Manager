@@ -2,7 +2,6 @@ package com.example.aidocumentmanager.common;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -79,18 +78,5 @@ class ValidationUtilTest {
         assertFalse(ValidationUtil.isValidLength("abcdef", 1, 5));
         assertTrue(ValidationUtil.isValidLength(null, 0, 5));
         assertFalse(ValidationUtil.isValidLength(null, 1, 5));
-    }
-
-    @Test
-    void validateFileUploadAggregatesErrors() {
-        ValidationUtil.ValidationResult ok =
-                ValidationUtil.validateFileUpload("notes.txt", 100, "This is a valid document body.");
-        assertTrue(ok.isValid());
-        assertEquals(0, ok.getErrors().size());
-
-        ValidationUtil.ValidationResult bad =
-                ValidationUtil.validateFileUpload("malware.exe", 0, "x");
-        assertFalse(bad.isValid());
-        assertFalse(bad.getErrors().isEmpty());
     }
 }

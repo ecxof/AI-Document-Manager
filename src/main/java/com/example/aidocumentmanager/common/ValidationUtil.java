@@ -1,6 +1,5 @@
 package com.example.aidocumentmanager.common;
 
-import com.example.aidocumentmanager.document.SupportedFileTypes;
 
 import java.util.regex.Pattern;
 
@@ -254,54 +253,6 @@ public class ValidationUtil {
             default -> {
                 return fieldName + " is not valid.";
             }
-        }
-    }
-
-    /**
-     * Comprehensive validation for file upload
-     */
-    public static ValidationResult validateFileUpload(String fileName, long fileSize, String content) {
-        ValidationResult result = new ValidationResult();
-
-        if (!isValidFileName(fileName)) {
-            result.addError("Invalid file name: " + fileName);
-        }
-
-        if (!isValidFileSize(fileSize)) {
-            result.addError("Invalid file size: " + ByteFormat.format(fileSize));
-        }
-
-        if (!SupportedFileTypes.isSupportedFile(fileName)) {
-            result.addError("Unsupported file format: " + SupportedFileTypes.getFileExtension(fileName));
-        }
-
-        if (!isValidDocumentContent(content)) {
-            result.addError("Document content is invalid or too short/long");
-        }
-
-        return result;
-    }
-
-    /**
-     * Validation result class
-     */
-    public static class ValidationResult {
-        private final java.util.List<String> errors = new java.util.ArrayList<>();
-
-        public void addError(String error) {
-            errors.add(error);
-        }
-
-        public boolean isValid() {
-            return errors.isEmpty();
-        }
-
-        public java.util.List<String> getErrors() {
-            return new java.util.ArrayList<>(errors);
-        }
-
-        public String getErrorMessage() {
-            return String.join("; ", errors);
         }
     }
 }

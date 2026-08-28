@@ -25,11 +25,4 @@ class SupportedFileTypesTest {
         assertEquals("", SupportedFileTypes.getFileExtension("noextension"));
         assertEquals("", SupportedFileTypes.getFileExtension(null));
     }
-
-    @Test
-    void describesFileTypes() {
-        assertEquals("PDF Document", SupportedFileTypes.getFileTypeDescription("a.pdf"));
-        assertEquals("Markdown File", SupportedFileTypes.getFileTypeDescription("a.md"));
-        assertEquals("Document", SupportedFileTypes.getFileTypeDescription("a.unknown"));
-    }
 }
