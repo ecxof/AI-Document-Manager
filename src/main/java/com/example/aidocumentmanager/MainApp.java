@@ -1,5 +1,7 @@
 package com.example.aidocumentmanager;
 
+import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -19,6 +21,21 @@ public class MainApp extends Application {
 
         // Initialize error handler with primary stage
         DialogService.getInstance().setPrimaryStage(primaryStage);
+
+        // Config failures are reported by the UI, not by the config layer.
+        // Registered before the first getInstance(): the configuration is read
+        // in the constructor, so registering later would miss a load failure.
+        ConfigurationManager.setFailureListener(new ConfigurationManager.FailureListener() {
+            @Override
+            public void onLoadFailed(IOException failure) {
+                DialogService.getInstance().handleException("Configuration Loading", failure);
+            }
+
+            @Override
+            public void onSaveFailed(IOException failure) {
+                DialogService.getInstance().handleConfigurationError("Save Configuration", failure.getMessage());
+            }
+        });
 
         // Initialize configuration manager
         try {

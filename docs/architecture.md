@@ -19,18 +19,18 @@ Two rules keep that honest:
   settings normalization have tests at all.
 - **`domain` and `common` depend on nothing of ours.** They are the leaves.
 
-### The one exception
+These are not conventions, they are checked: `PackageLayeringTest` walks the
+sources and fails the build if anything outside `ui` imports JavaFX, if anything
+below `ui` imports `ui`, or if `domain` or `common` grow a dependency on another
+package of ours.
 
-`ConfigurationManager` imports `ui.DialogService` to show a dialog when loading
-or saving the config file fails. That is the persistence layer reaching up into
-the UI, and it is the last remnant of the old `util` package where the two sat
-side by side.
-
-It is left as-is because removing it changes behaviour: today a failure to read
-`config.properties` puts a dialog in front of the user, and dropping the call
-would silently downgrade that to a log line. Fixing it properly means giving
-`ConfigurationManager` a failure listener that `MainApp` supplies, which is a
-behaviour question rather than a structural one.
+`ConfigurationManager` used to break the second rule, reaching up into
+`DialogService` to report a failed config read. It now exposes a
+`FailureListener` that `MainApp` registers before the first `getInstance()`,
+so the dialog still appears at the same moment while the config layer no longer
+knows dialogs exist. Failures are logged either way; the listener only decides
+whether the user is also told, and nothing is registered by default so tests and
+headless runs never try to raise a dialog.
 
 ## Packages
 

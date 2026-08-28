@@ -1,7 +1,6 @@
 package com.example.aidocumentmanager.config;
 
 import com.example.aidocumentmanager.common.LoggerUtil;
-import com.example.aidocumentmanager.ui.DialogService;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -35,6 +34,49 @@ public class ConfigurationManager {
      * that still means something.
      */
     private static final String DEFAULT_SIMILARITY_THRESHOLD = "0.5";
+
+    /**
+     * Notified when the configuration file cannot be read or written.
+     *
+     * <p>
+     * Reporting a failure to the user is the UI's business, and this class sits
+     * below the UI. Without this the config layer had to reach up into
+     * DialogService, which was the last place the dependency arrow pointed the
+     * wrong way.
+     *
+     * <p>
+     * Failures are logged here either way; a listener only decides whether the
+     * user is also told. Nothing is registered by default, so tests and any
+     * headless use do not try to raise a dialog.
+     */
+    public interface FailureListener {
+        void onLoadFailed(IOException failure);
+
+        void onSaveFailed(IOException failure);
+    }
+
+    private static final FailureListener IGNORE = new FailureListener() {
+        @Override
+        public void onLoadFailed(IOException failure) {
+        }
+
+        @Override
+        public void onSaveFailed(IOException failure) {
+        }
+    };
+
+    private static volatile FailureListener failureListener = IGNORE;
+
+    /**
+     * Register the listener before the first getInstance() call: the
+     * configuration is read in the constructor, so a listener registered after
+     * that misses a load failure.
+     *
+     * @param listener the listener, or null to stop reporting
+     */
+    public static void setFailureListener(FailureListener listener) {
+        failureListener = listener != null ? listener : IGNORE;
+    }
 
     private final Properties properties;
     private final Path configPath;
@@ -104,7 +146,7 @@ public class ConfigurationManager {
             }
         } catch (IOException e) {
             logger.error("Failed to load configuration", e);
-            DialogService.getInstance().handleException("Configuration Loading", e);
+            failureListener.onLoadFailed(e);
         }
     }
 
@@ -119,7 +161,7 @@ public class ConfigurationManager {
             logger.info("Configuration saved to: " + configPath);
         } catch (IOException e) {
             logger.error("Failed to save configuration", e);
-            DialogService.getInstance().handleConfigurationError("Save Configuration", e.getMessage());
+            failureListener.onSaveFailed(e);
         }
     }
 
