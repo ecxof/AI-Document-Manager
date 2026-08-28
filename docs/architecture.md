@@ -50,9 +50,8 @@ com.example.aidocumentmanager
 ├── document                    getting text out of files
 │   ├── SupportedFileTypes      which extensions are accepted
 │   ├── DocumentTextExtractor   TXT, PDF (PDFBox), and DOCX (POI) extraction
-│   ├── TextChunker             overlapping chunk splitting
-│   ├── DocumentFiles           hashing, DocumentEntry creation, data directory
-│   └── FileValidator           upload preconditions and detailed feedback
+│   ├── DocumentFiles           hashing and DocumentEntry creation
+│   └── FileValidator           upload preconditions
 │
 ├── ai                          retrieval-augmented chat
 │   ├── AIService               the facade the UI talks to (singleton)
