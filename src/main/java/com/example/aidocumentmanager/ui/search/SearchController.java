@@ -5,6 +5,7 @@ import com.example.aidocumentmanager.ai.AIService;
 import com.example.aidocumentmanager.common.LoggerUtil;
 import com.example.aidocumentmanager.common.ValidationUtil;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -364,7 +365,16 @@ public class SearchController {
         logger.logUserAction("Search", "Cleared");
     }
 
+    /**
+     * Put the caret in the search box when the tab is opened.
+     *
+     * <p>
+     * Deferred deliberately. This is called from the tab selection listener, and
+     * the TabPane takes focus for itself once that listener returns, so
+     * requesting focus directly here is silently undone. Running afterwards is
+     * what makes it stick.
+     */
     public void onViewActivated() {
-        searchField.requestFocus();
+        Platform.runLater(searchField::requestFocus);
     }
 }

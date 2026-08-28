@@ -2,6 +2,7 @@ package com.example.aidocumentmanager.ui;
 
 import com.example.aidocumentmanager.common.LoggerUtil;
 import com.example.aidocumentmanager.ui.documents.DocumentsController;
+import com.example.aidocumentmanager.ui.search.SearchController;
 import com.example.aidocumentmanager.ui.settings.SettingsController;
 
 import javafx.application.Platform;
@@ -43,8 +44,10 @@ public class MainController {
     @FXML
     private Tab settingsTab;
 
-    // Controllers for each view
+    // Controllers for each view. Held only for the views that need telling when
+    // their tab is activated, or that need a dependency handed to them.
     private DocumentsController documentsController;
+    private SearchController searchController;
     private SettingsController settingsController;
 
     // Cache loaded views to prevent reloading
@@ -89,12 +92,16 @@ public class MainController {
                 if (documentsController != null)
                     documentsController.onViewActivated();
             }
+            case "searchTab" -> {
+                if (searchController != null)
+                    searchController.onViewActivated();
+            }
             case "settingsTab" -> {
                 if (settingsController != null)
                     settingsController.onViewActivated();
             }
             default -> {
-                /* no-op for chat and search */ }
+                /* no-op for chat, which has nothing to do on activation */ }
         }
     }
 
@@ -184,7 +191,9 @@ public class MainController {
      */
     private Node loadSearchView() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("search/SearchView.fxml"));
-        return loader.load();
+        Node content = loader.load();
+        searchController = loader.getController();
+        return content;
     }
 
     /**
