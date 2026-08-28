@@ -1,7 +1,7 @@
 package com.example.aidocumentmanager.ai;
 
 import com.example.aidocumentmanager.config.ConfigurationManager;
-import com.example.aidocumentmanager.document.FileUtils;
+import com.example.aidocumentmanager.document.DocumentFiles;
 import com.example.aidocumentmanager.domain.DocumentEntry;
 import com.example.aidocumentmanager.storage.DocumentIndexStore;
 
@@ -83,7 +83,7 @@ class PdfPipelineTest {
     @Test
     void aPdfUploadIsParsedIndexedPersistedAndRetrievable() {
         // 1. Parse - the same call the Admin panel upload makes.
-        DocumentEntry document = assertDoesNotThrow(() -> FileUtils.createDocumentEntry(pdfFile));
+        DocumentEntry document = assertDoesNotThrow(() -> DocumentFiles.createDocumentEntry(pdfFile));
 
         assertEquals(DocumentEntry.DocumentType.PDF, document.getType());
         assertTrue(document.getContent().contains("380 operating hours"),

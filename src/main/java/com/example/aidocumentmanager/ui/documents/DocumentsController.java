@@ -1,10 +1,12 @@
 package com.example.aidocumentmanager.ui.documents;
 
+import com.example.aidocumentmanager.ai.AIService;
+import com.example.aidocumentmanager.common.ByteFormat;
+import com.example.aidocumentmanager.common.LoggerUtil;
+import com.example.aidocumentmanager.document.DocumentFiles;
+import com.example.aidocumentmanager.document.FileValidator;
 import com.example.aidocumentmanager.domain.DocumentEntry;
 import com.example.aidocumentmanager.domain.KnowledgeBase;
-import com.example.aidocumentmanager.ai.AIService;
-import com.example.aidocumentmanager.document.FileUtils;
-import com.example.aidocumentmanager.common.LoggerUtil;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -169,10 +171,10 @@ public class DocumentsController {
 
                     try {
                         // Validate file
-                        FileUtils.validateFile(file);
+                        FileValidator.validateFile(file);
 
                         // Create document entry
-                        DocumentEntry document = FileUtils.createDocumentEntry(file);
+                        DocumentEntry document = DocumentFiles.createDocumentEntry(file);
 
                         // Check for duplicates
                         if (isDuplicateDocument(document)) {
@@ -370,7 +372,7 @@ public class DocumentsController {
         indexedDocumentsLabel.setText(String.valueOf(stats.get("indexedDocuments")));
 
         int totalSizeKB = (Integer) stats.get("totalSizeKB");
-        totalSizeLabel.setText(FileUtils.formatFileSize(totalSizeKB * 1024L));
+        totalSizeLabel.setText(ByteFormat.format(totalSizeKB * 1024L));
     }
 
     private void showError(String message) {

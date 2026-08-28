@@ -1,10 +1,12 @@
 package com.example.aidocumentmanager.ui.settings;
 
 import com.example.aidocumentmanager.ai.AIService;
-import com.example.aidocumentmanager.config.ConfigurationManager;
+import com.example.aidocumentmanager.common.ByteFormat;
 import com.example.aidocumentmanager.common.LoggerUtil;
-import com.example.aidocumentmanager.ui.ThemeManager;
 import com.example.aidocumentmanager.common.ValidationUtil;
+import com.example.aidocumentmanager.config.ConfigurationManager;
+import com.example.aidocumentmanager.ui.ThemeManager;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -585,24 +587,14 @@ public class SettingsController {
         long usedMemory = totalMemory - freeMemory;
 
         sysInfo.append("\nMemory Usage:\n");
-        sysInfo.append("• Used: ").append(formatBytes(usedMemory)).append("\n");
-        sysInfo.append("• Free: ").append(formatBytes(freeMemory)).append("\n");
-        sysInfo.append("• Total: ").append(formatBytes(totalMemory)).append("\n");
-        sysInfo.append("• Max: ").append(formatBytes(maxMemory)).append("\n");
+        sysInfo.append("• Used: ").append(ByteFormat.format(usedMemory)).append("\n");
+        sysInfo.append("• Free: ").append(ByteFormat.format(freeMemory)).append("\n");
+        sysInfo.append("• Total: ").append(ByteFormat.format(totalMemory)).append("\n");
+        sysInfo.append("• Max: ").append(ByteFormat.format(maxMemory)).append("\n");
 
         if (systemInfoArea != null) {
             systemInfoArea.setText(sysInfo.toString());
         }
-    }
-
-    private String formatBytes(long bytes) {
-        if (bytes < 1024)
-            return bytes + " B";
-        if (bytes < 1024 * 1024)
-            return String.format("%.1f KB", bytes / 1024.0);
-        if (bytes < 1024 * 1024 * 1024)
-            return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
-        return String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0));
     }
 
     private void updateProviderVisibility(String provider) {

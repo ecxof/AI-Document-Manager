@@ -1,6 +1,6 @@
 package com.example.aidocumentmanager.common;
 
-import com.example.aidocumentmanager.document.FileUtils;
+import com.example.aidocumentmanager.document.SupportedFileTypes;
 
 import java.util.regex.Pattern;
 
@@ -268,11 +268,11 @@ public class ValidationUtil {
         }
 
         if (!isValidFileSize(fileSize)) {
-            result.addError("Invalid file size: " + FileUtils.formatFileSize(fileSize));
+            result.addError("Invalid file size: " + ByteFormat.format(fileSize));
         }
 
-        if (!FileUtils.isSupportedFile(fileName)) {
-            result.addError("Unsupported file format: " + FileUtils.getFileExtension(fileName));
+        if (!SupportedFileTypes.isSupportedFile(fileName)) {
+            result.addError("Unsupported file format: " + SupportedFileTypes.getFileExtension(fileName));
         }
 
         if (!isValidDocumentContent(content)) {
