@@ -1,9 +1,7 @@
 package com.example.aidocumentmanager.ui;
 
 import com.example.aidocumentmanager.common.LoggerUtil;
-import com.example.aidocumentmanager.ui.chat.ChatController;
 import com.example.aidocumentmanager.ui.documents.DocumentsController;
-import com.example.aidocumentmanager.ui.search.SearchController;
 import com.example.aidocumentmanager.ui.settings.SettingsController;
 
 import javafx.application.Platform;
@@ -47,9 +45,7 @@ public class MainController {
     private Tab settingsTab;
 
     // Controllers for each view
-    private ChatController chatController;
     private DocumentsController documentsController;
-    private SearchController searchController;
     private SettingsController settingsController;
 
     // Cache loaded views to prevent reloading
@@ -171,9 +167,7 @@ public class MainController {
      */
     private Node loadChatView() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("chat/ChatView.fxml"));
-        Node content = loader.load();
-        chatController = loader.getController();
-        return content;
+        return loader.load();
     }
 
     /**
@@ -191,9 +185,7 @@ public class MainController {
      */
     private Node loadSearchView() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("search/SearchView.fxml"));
-        Node content = loader.load();
-        searchController = loader.getController();
-        return content;
+        return loader.load();
     }
 
     /**
@@ -290,25 +282,6 @@ public class MainController {
             mainTabPane.getSelectionModel().select(targetTab);
             LoggerUtil.getInstance().log(LoggerUtil.LogLevel.INFO, "MainController", "Navigated to tab: " + tabId);
         }
-    }
-
-    /**
-     * Get reference to specific controller
-     */
-    public ChatController getChatController() {
-        return chatController;
-    }
-
-    public DocumentsController getDocumentsController() {
-        return documentsController;
-    }
-
-    public SearchController getSearchController() {
-        return searchController;
-    }
-
-    public SettingsController getSettingsController() {
-        return settingsController;
     }
 
     /**
