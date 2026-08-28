@@ -4,10 +4,10 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import com.example.aidocumentmanager.util.LoggerUtil;
-import com.example.aidocumentmanager.util.ErrorHandler;
-import com.example.aidocumentmanager.util.ConfigurationManager;
-import com.example.aidocumentmanager.util.ThemeManager;
+import com.example.aidocumentmanager.common.LoggerUtil;
+import com.example.aidocumentmanager.ui.DialogService;
+import com.example.aidocumentmanager.config.ConfigurationManager;
+import com.example.aidocumentmanager.ui.ThemeManager;
 
 public class MainApp extends Application {
 
@@ -17,19 +17,19 @@ public class MainApp extends Application {
         LoggerUtil.getInstance().logStartup();
 
         // Initialize error handler with primary stage
-        ErrorHandler.getInstance().setPrimaryStage(primaryStage);
+        DialogService.getInstance().setPrimaryStage(primaryStage);
 
         // Initialize configuration manager
         try {
             ConfigurationManager.getInstance();
             LoggerUtil.getInstance().info("Configuration manager initialized");
         } catch (Exception e) {
-            ErrorHandler.getInstance().handleException("Configuration Initialization", e);
+            DialogService.getInstance().handleException("Configuration Initialization", e);
         }
 
         try {
             // Load the main application window
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_view.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ui/MainView.fxml"));
 
             // Load configuration for window size
             ConfigurationManager config = ConfigurationManager.getInstance();
@@ -39,7 +39,7 @@ public class MainApp extends Application {
             Scene scene = new Scene(loader.load(), width, height);
 
             // Apply CSS stylesheet
-            String cssPath = getClass().getResource("/styles/simple.css").toExternalForm();
+            String cssPath = getClass().getResource("ui/app.css").toExternalForm();
             scene.getStylesheets().add(cssPath);
 
             // Register scene with ThemeManager and apply saved theme
@@ -96,14 +96,14 @@ public class MainApp extends Application {
 
             // Validate configuration after startup
             if (!config.validateConfiguration()) {
-                ErrorHandler.getInstance().showWarningDialog("Configuration Warning",
+                DialogService.getInstance().showWarningDialog("Configuration Warning",
                         "Some configuration settings may need attention.",
                         "Please check the Settings tab to ensure all values are correct.");
             }
 
         } catch (Exception e) {
             LoggerUtil.getInstance().error("Failed to start application", e);
-            ErrorHandler.getInstance().handleException("Application Startup", e);
+            DialogService.getInstance().handleException("Application Startup", e);
             throw e;
         }
     }
