@@ -26,46 +26,31 @@ Without an API key the application still starts and remains fully navigable. Cha
 
 ---
 
-## Project Architecture (MVC)
+## Project Architecture
 
 The Maven project sits at the repository root, so `mvn` commands run from there.
 
-```
-AI-Document-Manager/
-├── README.md
-├── pom.xml
-└── src/
-    ├── main/
-    │   ├── java/com/example/aidocumentmanager/
-    │   │   ├── MainApp.java             -> JavaFX Application entry point
-    │   │   ├── Launcher.java            -> IDE-friendly wrapper around MainApp
-    │   │   ├── controller/
-    │   │   │   ├── MainController.java      -> Navigation & main window
-    │   │   │   ├── ChatController.java      -> AI chat interface
-    │   │   │   ├── AdminController.java     -> Document management
-    │   │   │   ├── SearchController.java    -> Search + result export
-    │   │   │   └── SettingsController.java  -> Configuration management
-    │   │   ├── model/
-    │   │   │   ├── ChatMessage.java         -> Chat data structure
-    │   │   │   ├── DocumentEntry.java       -> Document metadata & statistics
-    │   │   │   └── KnowledgeBase.java       -> Document collection + statistics
-    │   │   ├── service/
-    │   │   │   └── AIService.java           -> RAG pipeline (singleton)
-    │   │   └── util/
-    │   │       ├── FileUtils.java           -> Multi-format text extraction
-    │   │       ├── LoggerUtil.java          -> Logging facade
-    │   │       ├── ValidationUtil.java      -> Input validation
-    │   │       ├── ErrorHandler.java        -> Error dialogs & handling
-    │   │       ├── ConfigurationManager.java -> Settings persistence
-    │   │       └── ThemeManager.java        -> Light/Dark/System theming
-    │   └── resources/
-    │       ├── fxml/                        -> main, chat, admin, search, settings views
-    │       ├── styles/                      -> application.css, simple.css
-    │       └── log4j2.xml                   -> Logging configuration
-    └── test/java/com/example/aidocumentmanager/
-        ├── model/DocumentEntryTest.java
-        └── util/FileUtilsTest.java, ValidationUtilTest.java
-```
+Packages are named after what they own, and dependencies point one way: `ui`
+depends on `ai`, `document`, `storage`, `config`, `domain`, and `common`, and
+nothing below `ui` imports JavaFX. That is what makes the search rules, the CSV
+export, and the settings normalization testable without a scene graph. There is
+one known exception, noted in the architecture doc.
+
+| Package | Owns |
+| --- | --- |
+| `config` | Settings persistence and migrations |
+| `domain` | `DocumentEntry`, `ChatMessage`, `KnowledgeBase` |
+| `document` | Text extraction from TXT, PDF, and DOCX; chunking; upload validation |
+| `ai` | Retrieval-augmented chat: models, embeddings, prompts, statistics |
+| `storage` | The on-disk index that survives a restart |
+| `ui` | The shell and one package per tab: chat, documents, search, settings |
+| `common` | Logging, validation, byte formatting |
+
+FXML and the stylesheet live under the package that loads them, so each view is
+found by name relative to its controller.
+
+See [docs/architecture.md](docs/architecture.md) for the full package layout,
+the resource layout, and where the tests sit.
 
 ---
 
@@ -156,18 +141,16 @@ mvn compile && mvn javafx:run
 
 ## Configuration & Data Location
 
-On first launch the application creates a directory in your home folder:
+On first launch the application creates `~/.aidocumentmanager/`, holding
+`config.properties`, copies of uploaded documents, logs, and the persisted
+index.
 
-```
-~/.aidocumentmanager/
-├── config.properties     # Provider, API keys, RAG settings, window state
-├── documents/            # Copies of uploaded documents
-└── logs/                 # Application logs
-```
-
-**API keys are stored in plain text** in `config.properties`. Treat that file as a
-secret, and do not commit it. The repository's `.gitignore` already excludes
+**API keys are stored in plain text** in `config.properties`. Treat that file as
+a secret, and do not commit it. The repository's `.gitignore` already excludes
 `config.properties` and `.aidocumentmanager/`.
+
+See [docs/configuration.md](docs/configuration.md) for every setting, its
+default, and what the similarity threshold actually compares against.
 
 ---
 
@@ -194,10 +177,10 @@ secret, and do not commit it. The repository's `.gitignore` already excludes
 
 ### Design Patterns
 
-- **MVC** - Clean separation between FXML views, controllers, and the model layer
-- **Singleton** - `AIService`, `ConfigurationManager`, `ErrorHandler`, `LoggerUtil`, `ThemeManager`
+- **MVC** - Clean separation between FXML views, controllers, and the domain layer
+- **Singleton** - `AIService`, `ConfigurationManager`, `DialogService`, `LoggerUtil`, `ThemeManager`
 - **Observer** - JavaFX property listeners drive window-state persistence and theming
-- **Strategy** - Per-extension text extraction in `FileUtils`
+- **Strategy** - Per-extension text extraction in `DocumentTextExtractor`
 
 ### Key Technical Decisions
 
